@@ -107,6 +107,7 @@ targets:
         createIntermediateGroups: true
         excludes:
           - Fixtures
+          - FixtureSources
       - path: Tests/Fixtures
         type: folder
         buildPhase: resources
