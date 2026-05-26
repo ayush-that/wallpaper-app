@@ -94,6 +94,30 @@ final class NativeImporterTests: XCTestCase {
         )
     }
 
+    func test_import_metal_shader_creates_shader_wallpaper_with_placeholder_thumbnail() throws {
+        // Create a tiny .metal file in tmp and import it.
+        let src = libraryRoot.appendingPathComponent("simple.metal")
+        let body = """
+        fragment float4 mural_main(VertexOut in [[stage_in]],
+                                   constant Uniforms& u [[buffer(0)]]) {
+            return float4(1.0);
+        }
+        """
+        try body.write(to: src, atomically: true, encoding: .utf8)
+
+        let importer = NativeImporter(libraryRoot: libraryRoot)
+        let wallpaper = try importer.importFile(at: src)
+
+        XCTAssertEqual(wallpaper.type, .shader)
+        XCTAssertEqual(wallpaper.entryRelativePath, "asset.metal")
+        let pkgDir = libraryRoot.appendingPathComponent(wallpaper.id.uuidString)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: pkgDir.appendingPathComponent("asset.metal").path))
+        XCTAssertTrue(
+            FileManager.default.fileExists(atPath: pkgDir.appendingPathComponent("thumbnail.png").path),
+            "shader-placeholder.png should be copied into the package"
+        )
+    }
+
     /// Build a real 8x8 PNG in-process so the test doesn't depend on a fixture file.
     private func makeTinyPNG() throws -> Data {
         let image = NSImage(size: NSSize(width: 8, height: 8))
