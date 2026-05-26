@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         displayManager = mgr
         engine = WallpaperEngine(displayManager: mgr)
 
+        SystemWallpaperOverride.applyAll()
+
         statusItem = StatusItemController(
             onMenuItem: { [weak self] action in self?.handle(action) },
             onVideoDrop: { [weak self] url in self?.dropped(url) },
