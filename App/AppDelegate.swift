@@ -32,7 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem = StatusItemController(
             onMenuItem: { [weak self] action in self?.handle(action) },
-            onVideoDrop: { [weak self] url in self?.dropped(url) }
+            onVideoDrop: { [weak self] url in self?.dropped(url) },
+            onScaleChange: { [weak self] mode in self?.setScale(mode) },
+            activeScaleMode: activeScaleMode
         )
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
@@ -70,6 +72,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             engine?.setRendererForAllDisplays(factory: { SolidColorRenderer(color: .magenta) })
         case .quit:
             NSApp.terminate(nil)
+        }
+    }
+
+    private func setScale(_ mode: ScaleMode) {
+        activeScaleMode = mode
+        statusItem?.setActiveScaleMode(mode)
+        guard let engine else { return }
+        for uuid in engine.activeRendererUUIDs {
+            if let video = engine.renderer(for: uuid) as? VideoRenderer {
+                video.setScaleMode(mode)
+            }
         }
     }
 
