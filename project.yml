@@ -102,6 +102,11 @@ targets:
       - path: Tests
         optional: true
         createIntermediateGroups: true
+        excludes:
+          - Fixtures
+      - path: Tests/Fixtures
+        type: folder
+        buildPhase: resources
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
