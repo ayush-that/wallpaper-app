@@ -5,9 +5,19 @@ import OSLog
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let log = Log.logger("AppDelegate")
     private var statusItem: StatusItemController?
+    private var logSink: LogFileSink?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        let logURL = FileManager.default
+            .urls(for: .libraryDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Logs/Mural/mural.log")
+        if let sink = try? LogFileSink(url: logURL) {
+            self.logSink = sink
+            sink.write("Mural launched (version \(Bundle.main.shortVersionString))")
+        }
+
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
         statusItem = StatusItemController()
     }
