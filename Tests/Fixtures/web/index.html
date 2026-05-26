@@ -1,0 +1,10 @@
+<!doctype html>
+<html><body>
+<div id="dot" style="background:#f0f;width:50px;height:50px"></div>
+<script>
+  function livelyPropertyListener(name, value) {
+    if (name === "color") document.getElementById("dot").style.background = value;
+  }
+  setTimeout(function() { console.log("hello from web wallpaper"); }, 100);
+</script>
+</body></html>
