@@ -1,10 +1,17 @@
 import Foundation
+import os
 
-public final class LogFileSink: @unchecked Sendable {
+public final class LogFileSink {
     private let url: URL
     private let maxBytes: Int
-    private let queue = DispatchQueue(label: "mural.log.sink")
-    private var handle: FileHandle
+    // Lock-protected state. OSAllocatedUnfairLock<State> is Sendable
+    // and gives us safe access to the FileHandle from any thread without
+    // making LogFileSink itself Sendable.
+    private let state: OSAllocatedUnfairLock<State>
+
+    private struct State {
+        var handle: FileHandle
+    }
 
     public init(url: URL, maxBytes: Int = 5_000_000) throws {
         self.url = url
@@ -14,43 +21,35 @@ public final class LogFileSink: @unchecked Sendable {
         if !FileManager.default.fileExists(atPath: url.path) {
             FileManager.default.createFile(atPath: url.path, contents: nil)
         }
-        handle = try FileHandle(forWritingTo: url)
-        try handle.seekToEnd()
+        let h = try FileHandle(forWritingTo: url)
+        try h.seekToEnd()
+        self.state = OSAllocatedUnfairLock(initialState: State(handle: h))
     }
 
     public func write(_ line: String) {
-        queue.async { [self] in
-            let stamped = "[\(Self.iso8601())] \(line)\n"
-            if let data = stamped.data(using: .utf8) {
-                try? handle.write(contentsOf: data)
-            }
-            rotateIfNeeded()
+        let stamped = "[\(Date().formatted(.iso8601))] \(line)\n"
+        guard let data = stamped.data(using: .utf8) else { return }
+        let url = self.url
+        let maxBytes = self.maxBytes
+        state.withLock { state in
+            try? state.handle.write(contentsOf: data)
+            Self.rotateIfNeededLocked(state: &state, url: url, maxBytes: maxBytes)
         }
     }
 
-    public func flush() { queue.sync { try? handle.synchronize() } }
+    public func flush() {
+        state.withLock { state in
+            try? state.handle.synchronize()
+        }
+    }
 
-    private func rotateIfNeeded() {
-        guard let size = try? handle.offset(), size >= maxBytes else { return }
-        try? handle.close()
+    private static func rotateIfNeededLocked(state: inout State, url: URL, maxBytes: Int) {
+        guard let size = try? state.handle.offset(), size >= maxBytes else { return }
+        try? state.handle.close()
         let rotated = url.deletingPathExtension().appendingPathExtension("1.log")
         try? FileManager.default.removeItem(at: rotated)
         try? FileManager.default.moveItem(at: url, to: rotated)
         FileManager.default.createFile(atPath: url.path, contents: nil)
-        if let h = try? FileHandle(forWritingTo: url) { handle = h }
-    }
-
-    nonisolated(unsafe) private static let iso: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-
-    private static let isoLock = NSLock()
-
-    private static func iso8601() -> String {
-        isoLock.lock()
-        defer { isoLock.unlock() }
-        return iso.string(from: Date())
+        if let h = try? FileHandle(forWritingTo: url) { state.handle = h }
     }
 }
