@@ -75,6 +75,9 @@ targets:
         LSUIElement: true
         LSMinimumSystemVersion: "14.0"
         CFBundleShortVersionString: "0.1.0"
+        CFBundleURLTypes:
+          - CFBundleURLName: app.mural.Mural
+            CFBundleURLSchemes: [mural]
         CFBundleVersion: "1"
         NSHumanReadableCopyright: "© 2026"
         NSAppleEventsUsageDescription: "Mural detects foreground apps to pause wallpapers when needed."
@@ -107,6 +110,7 @@ targets:
         createIntermediateGroups: true
         excludes:
           - Fixtures
+          - FixtureSources
       - path: Tests/Fixtures
         type: folder
         buildPhase: resources

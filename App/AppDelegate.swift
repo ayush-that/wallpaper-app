@@ -20,6 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var engine: WallpaperEngine?
     private var activeScaleMode: ScaleMode = .fill
 
+    private(set) var libraryService: LibraryService?
+    private(set) var libraryViewModel: LibraryViewModel?
+    private(set) var orchestrator: WallpaperOrchestrator?
+
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
@@ -29,6 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mgr.start()
         displayManager = mgr
         engine = WallpaperEngine(displayManager: mgr)
+
+        setupLibrary()
 
         SystemWallpaperOverride.applyAll()
 
@@ -44,6 +50,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_: Notification) {
         displayManager?.shutdown()
+    }
+
+    func application(_: NSApplication, open urls: [URL]) {
+        for url in urls where url.scheme == "mural" {
+            switch url.host {
+            case "library":
+                LibraryWindowController.shared.open(
+                    viewModel: libraryViewModel,
+                    orchestrator: orchestrator
+                )
+            default:
+                log.warning("Unhandled mural:// host: \(url.host ?? "nil", privacy: .public)")
+            }
+        }
+    }
+
+    private func setupLibrary() {
+        let libRoot = LibraryRoot.defaultURL()
+        try? LibraryRoot.ensureExists(root: libRoot)
+        let catalogURL = LibraryRoot.catalogURL(root: libRoot)
+        if let catalog = try? Catalog(url: catalogURL) {
+            let library = LibraryService(libraryRoot: libRoot, catalog: catalog)
+            libraryService = library
+            libraryViewModel = LibraryViewModel(service: library)
+            if let engine {
+                orchestrator = WallpaperOrchestrator(engine: engine, library: library)
+            }
+        } else {
+            log.error("Catalog open failed at \(catalogURL.path, privacy: .public) — library disabled this run")
+        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
@@ -63,8 +99,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handle(_ action: StatusMenuAction) {
         switch action {
         case .library:
-            // Wired in Phase 3.
-            break
+            LibraryWindowController.shared.open(
+                viewModel: libraryViewModel,
+                orchestrator: orchestrator
+            )
         case .settings:
             NSApp.activate(ignoringOtherApps: true)
             NSApp.sendAction(#selector(_MuralSettingsAction.showSettingsWindow(_:)), to: nil, from: nil)

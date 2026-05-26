@@ -1,0 +1,12 @@
+{
+  "AppVersion": "2.0.7.0",
+  "Title": "Clock Demo",
+  "Thumbnail": "thumbnail.png",
+  "Preview": null,
+  "Desc": "Demo HTML clock",
+  "Author": "Anon",
+  "License": "CC-BY-4.0",
+  "Type": 5,
+  "FileName": "index.html",
+  "Tags": ["clock", "html"]
+}
