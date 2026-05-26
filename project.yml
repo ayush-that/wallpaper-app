@@ -79,6 +79,11 @@ targets:
         SUEnableAutomaticChecks: true
     entitlements:
       path: App/Mural.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.cs.allow-jit: true
+        com.apple.security.cs.disable-library-validation: true
+        com.apple.security.automation.apple-events: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.mural.Mural
@@ -97,6 +102,10 @@ targets:
       - path: Tests
         optional: true
         createIntermediateGroups: true
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.mural.MuralTests
     dependencies:
       - target: Mural
       - package: SnapshotTesting
