@@ -23,4 +23,17 @@ final class StatusMenuTests: XCTestCase {
         XCTAssertEqual(tag(forTitle: "Pause All"), StatusMenuAction.pauseAll.rawValue)
         XCTAssertEqual(tag(forTitle: "Quit Mural"), StatusMenuAction.quit.rawValue)
     }
+
+    func test_menu_contains_smoke_test_item_with_correct_tag() {
+        let menu = StatusMenu.build(target: NSObject(), action: #selector(NSObject.description))
+        let item = menu.items.first(where: { $0.title == "Debug: Magenta Smoke Test" })
+        XCTAssertNotNil(item)
+        XCTAssertEqual(item?.tag, StatusMenuAction.smokeTest.rawValue)
+    }
+
+    func test_menu_action_tags_are_unique() {
+        let menu = StatusMenu.build(target: NSObject(), action: #selector(NSObject.description))
+        let tags = menu.items.compactMap { $0.tag == 0 && $0.isSeparatorItem ? nil : $0.tag }
+        XCTAssertEqual(tags, Array(Set(tags)).sorted())
+    }
 }
