@@ -1,6 +1,6 @@
-import XCTest
 import AppKit
 @testable import Mural
+import XCTest
 
 @MainActor
 final class StatusMenuTests: XCTestCase {

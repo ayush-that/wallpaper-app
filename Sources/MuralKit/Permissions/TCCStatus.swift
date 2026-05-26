@@ -7,12 +7,11 @@ public enum TCCStatus {
     }
 
     public static func systemSettingsURL(for service: Service) -> URL {
-        let anchor: String
-        switch service {
-        case .screenRecording: anchor = "Privacy_ScreenCapture"
-        case .automation:      anchor = "Privacy_Automation"
-        case .accessibility:   anchor = "Privacy_Accessibility"
-        case .microphone:      anchor = "Privacy_Microphone"
+        let anchor = switch service {
+        case .screenRecording: "Privacy_ScreenCapture"
+        case .automation: "Privacy_Automation"
+        case .accessibility: "Privacy_Accessibility"
+        case .microphone: "Privacy_Microphone"
         }
         return URL(string: "x-apple.systempreferences:com.apple.preference.security?\(anchor)")!
     }

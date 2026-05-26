@@ -15,7 +15,7 @@ public enum StatusMenu {
             ("Library…", "l", .library),
             ("Settings…", ",", .settings),
             ("Pause All", "p", .pauseAll),
-            ("Quit Mural", "q", .quit),
+            ("Quit Mural", "q", .quit)
         ]
         for (title, key, menuAction) in entries {
             if menuAction == .quit {

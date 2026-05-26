@@ -1,5 +1,5 @@
-import XCTest
 @testable import Mural
+import XCTest
 
 final class SettingsStoreTests: XCTestCase {
     var defaults: UserDefaults!

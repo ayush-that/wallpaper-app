@@ -1,5 +1,5 @@
-import XCTest
 @testable import Mural
+import XCTest
 
 final class LogTests: XCTestCase {
     func test_subsystem_namespaces_category_under_bundle_id() {

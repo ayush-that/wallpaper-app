@@ -11,7 +11,8 @@ public final class SettingsStore {
 
     public func get<V: Codable & Sendable>(_ key: SettingsKey<V>) -> V {
         guard let data = defaults.data(forKey: key.name),
-              let value = try? decoder.decode(V.self, from: data) else {
+              let value = try? decoder.decode(V.self, from: data)
+        else {
             return key.default
         }
         return value

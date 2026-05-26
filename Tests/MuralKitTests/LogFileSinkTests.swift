@@ -1,5 +1,5 @@
-import XCTest
 @testable import Mural
+import XCTest
 
 final class LogFileSinkTests: XCTestCase {
     func test_sink_writes_lines_to_disk() throws {
@@ -18,7 +18,9 @@ final class LogFileSinkTests: XCTestCase {
         let tmp = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent(UUID().uuidString + ".log")
         let sink = try LogFileSink(url: tmp, maxBytes: 1024)
-        for _ in 0..<200 { sink.write(String(repeating: "x", count: 32)) }
+        for _ in 0 ..< 200 {
+            sink.write(String(repeating: "x", count: 32))
+        }
         sink.flush()
         let rotated = tmp.deletingPathExtension().appendingPathExtension("1.log")
         XCTAssertTrue(FileManager.default.fileExists(atPath: rotated.path))

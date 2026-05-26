@@ -7,14 +7,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController?
     private var logSink: LogFileSink?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         let logURL = FileManager.default
             .urls(for: .libraryDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Logs/Mural/mural.log")
         if let sink = try? LogFileSink(url: logURL) {
-            self.logSink = sink
+            logSink = sink
             sink.write("Mural launched (version \(Bundle.main.shortVersionString))")
         }
 
@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = StatusItemController()
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
         false
     }
 }
