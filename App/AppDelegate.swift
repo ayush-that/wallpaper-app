@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: StatusItemController?
     private var logSink: LogFileSink?
     private var displayManager: DisplayManager?
-    private var smokeRenderers: [SolidColorRenderer] = []
+    private var engine: WallpaperEngine?
 
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mgr = DisplayManager()
         mgr.start()
         displayManager = mgr
+        engine = WallpaperEngine(displayManager: mgr)
 
         statusItem = StatusItemController(onMenuItem: { [weak self] action in
             self?.handle(action)
@@ -62,31 +63,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.sendAction(#selector(_MuralSettingsAction.showSettingsWindow(_:)), to: nil, from: nil)
         case .pauseAll:
-            for renderer in smokeRenderers {
-                renderer.pause()
-            }
+            engine?.pauseAll()
         case .smokeTest:
-            runSmokeTest()
+            engine?.setRendererForAllDisplays(factory: { SolidColorRenderer(color: .magenta) })
         case .quit:
             NSApp.terminate(nil)
-        }
-    }
-
-    private func runSmokeTest() {
-        guard let mgr = displayManager else { return }
-        // Tear down any existing smoke renderers first so subsequent clicks
-        // re-apply cleanly.
-        for renderer in smokeRenderers {
-            renderer.detach()
-        }
-        smokeRenderers.removeAll()
-        // One renderer per host — a single SolidColorRenderer attached to
-        // multiple hosts would have its single CALayer reparented, leaving
-        // every host except the last empty.
-        for host in mgr.hosts.values {
-            let renderer = SolidColorRenderer(color: .magenta)
-            renderer.attach(to: host)
-            smokeRenderers.append(renderer)
         }
     }
 }
