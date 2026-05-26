@@ -65,10 +65,60 @@ final class RendererFactoryTests: XCTestCase {
         XCTAssertTrue(renderer is ImageRenderer)
     }
 
-    func test_unimplemented_type_returns_placeholder_solid_color() throws {
+    func test_web_wallpaper_yields_web_renderer() throws {
         let entry = pkgRoot.appendingPathComponent("index.html")
         try "<!doctype html>".write(to: entry, atomically: true, encoding: .utf8)
         let wallpaper = Wallpaper(title: "x", type: .web, entryRelativePath: "index.html")
+        let package = WallpaperPackage(root: pkgRoot)
+        try package.writeMetadata(wallpaper)
+
+        let renderer = try RendererFactory.makeRenderer(
+            for: wallpaper,
+            package: package,
+            scaleMode: .fill
+        )
+        XCTAssertTrue(renderer is WebRenderer)
+    }
+
+    func test_urlPage_with_http_scheme_yields_web_renderer() throws {
+        // entryRelativePath holds the URL string, not a real path.
+        let wallpaper = Wallpaper(
+            title: "Shadertoy demo",
+            type: .urlPage,
+            entryRelativePath: "https://www.shadertoy.com/embed/3l23Rh"
+        )
+        let package = WallpaperPackage(root: pkgRoot)
+        try package.writeMetadata(wallpaper)
+
+        let renderer = try RendererFactory.makeRenderer(
+            for: wallpaper,
+            package: package,
+            scaleMode: .fill
+        )
+        XCTAssertTrue(renderer is WebRenderer)
+    }
+
+    func test_urlPage_with_invalid_scheme_falls_back_to_placeholder() throws {
+        let wallpaper = Wallpaper(
+            title: "Bad URL",
+            type: .urlPage,
+            entryRelativePath: "not-a-url"
+        )
+        let package = WallpaperPackage(root: pkgRoot)
+        try package.writeMetadata(wallpaper)
+
+        let renderer = try RendererFactory.makeRenderer(
+            for: wallpaper,
+            package: package,
+            scaleMode: .fill
+        )
+        XCTAssertTrue(renderer is SolidColorRenderer)
+    }
+
+    func test_gif_still_returns_placeholder_until_phase_6() throws {
+        let entry = pkgRoot.appendingPathComponent("clip.gif")
+        try Data([0x00]).write(to: entry)
+        let wallpaper = Wallpaper(title: "x", type: .gif, entryRelativePath: "clip.gif")
         let package = WallpaperPackage(root: pkgRoot)
         try package.writeMetadata(wallpaper)
 
