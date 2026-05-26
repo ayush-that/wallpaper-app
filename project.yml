@@ -1,0 +1,113 @@
+name: Mural
+options:
+  bundleIdPrefix: app.mural
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "14.0"
+  groupSortPosition: top
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "6.29.0"
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation
+    from: "0.9.19"
+  ArgumentParser:
+    url: https://github.com/apple/swift-argument-parser
+    from: "1.5.0"
+  Logging:
+    url: https://github.com/apple/swift-log
+    from: "1.5.4"
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    from: "1.17.0"
+  ViewInspector:
+    url: https://github.com/nalexn/ViewInspector
+    from: "0.10.0"
+targets:
+  Mural:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - path: Sources/MuralKit
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralUI
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralWindowing
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralRenderers
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralPolicy
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralPlaylist
+        optional: true
+        createIntermediateGroups: true
+      - path: Sources/MuralUpdates
+        optional: true
+        createIntermediateGroups: true
+    info:
+      path: App/Info.plist
+      properties:
+        LSUIElement: true
+        LSMinimumSystemVersion: "14.0"
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        NSHumanReadableCopyright: "© 2026"
+        NSAppleEventsUsageDescription: "Mural detects foreground apps to pause wallpapers when needed."
+        SUFeedURL: "https://mural.app/appcast.xml"
+        SUEnableAutomaticChecks: true
+    entitlements:
+      path: App/Mural.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mural.Mural
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - package: Sparkle
+      - package: GRDB
+      - package: ZIPFoundation
+      - package: ArgumentParser
+      - package: Logging
+  MuralTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+        optional: true
+        createIntermediateGroups: true
+    dependencies:
+      - target: Mural
+      - package: SnapshotTesting
+      - package: ViewInspector
+schemes:
+  Mural:
+    build:
+      targets:
+        Mural: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [MuralTests]

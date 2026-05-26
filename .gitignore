@@ -4,6 +4,7 @@
 .LSOverride
 
 # Xcode
+Mural.xcodeproj/
 build/
 DerivedData/
 *.pbxuser
