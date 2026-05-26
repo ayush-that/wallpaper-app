@@ -129,4 +129,29 @@ final class RendererFactoryTests: XCTestCase {
         )
         XCTAssertTrue(renderer is SolidColorRenderer)
     }
+
+    func test_shader_wallpaper_yields_shader_renderer() throws {
+        // Copy the test fixture into the package root.
+        let src = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(
+                forResource: "red",
+                withExtension: "metal",
+                subdirectory: "Fixtures/shaders"
+            ),
+            "missing Tests/Fixtures/shaders/red.metal"
+        )
+        let entry = pkgRoot.appendingPathComponent("asset.metal")
+        try FileManager.default.copyItem(at: src, to: entry)
+
+        let wallpaper = Wallpaper(title: "shader", type: .shader, entryRelativePath: "asset.metal")
+        let package = WallpaperPackage(root: pkgRoot)
+        try package.writeMetadata(wallpaper)
+
+        let renderer = try RendererFactory.makeRenderer(
+            for: wallpaper,
+            package: package,
+            scaleMode: .fill
+        )
+        XCTAssertTrue(renderer is ShaderRenderer)
+    }
 }

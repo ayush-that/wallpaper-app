@@ -39,7 +39,15 @@ public struct NativeImporter: Sendable {
             try? ThumbnailRenderer.render(videoURL: entryDest, to: thumbDest, size: thumbSize)
         case .image, .gif:
             try? ThumbnailRenderer.render(imageURL: entryDest, to: thumbDest, size: thumbSize)
-        case .web, .shader, .urlPage, .appWindow:
+        case .shader:
+            if let placeholder = Bundle.main.url(
+                forResource: "shader-placeholder",
+                withExtension: "png",
+                subdirectory: "Resources/thumbnails"
+            ) ?? Bundle.main.url(forResource: "shader-placeholder", withExtension: "png") {
+                try? FileManager.default.copyItem(at: placeholder, to: thumbDest)
+            }
+        case .web, .urlPage, .appWindow:
             // No default thumbnail for these types — Phase 12 ships placeholders.
             break
         }
