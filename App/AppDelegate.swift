@@ -46,6 +46,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
+
+        // Auto-enable audio reactivity if Screen Recording permission is already granted.
+        // First-run users without permission see the TCC sheet (Phase 6 Task 8) when an
+        // audio-reactive wallpaper actually requests it. Settings UI in Phase 11 surfaces
+        // an explicit toggle.
+        if SystemAudioCapture.preflight() == .granted, let orchestrator {
+            Task { await orchestrator.enableAudio() }
+        }
     }
 
     func applicationWillTerminate(_: Notification) {
