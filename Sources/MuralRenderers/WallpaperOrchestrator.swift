@@ -61,6 +61,7 @@ public final class WallpaperOrchestrator: ObservableObject {
         guard !audioStarted else { return true }
         guard SystemAudioCapture.preflight() == .granted else {
             log.warning("Audio enable requested but Screen Recording TCC not granted.")
+            PermissionRequest.post(.screenRecording)
             return false
         }
         do {

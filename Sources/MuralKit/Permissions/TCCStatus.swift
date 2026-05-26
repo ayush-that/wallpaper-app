@@ -2,7 +2,7 @@ import AppKit
 import CoreGraphics
 
 public enum TCCStatus {
-    public enum Service {
+    public enum Service: Equatable, Sendable {
         case screenRecording, automation, accessibility, microphone
     }
 
