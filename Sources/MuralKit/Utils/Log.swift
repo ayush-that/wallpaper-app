@@ -6,8 +6,8 @@ public enum Log {
         Bundle.main.bundleIdentifier ?? "app.mural.Mural"
     }
 
-    public static func subsystem(for category: String, bundleID: String? = nil) -> String {
-        "\(bundleID ?? Self.bundleID).\(category)"
+    public static func subsystem(for category: String) -> String {
+        "\(bundleID).\(category)"
     }
 
     public static func logger(_ category: String) -> Logger {
