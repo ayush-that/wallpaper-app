@@ -4,6 +4,7 @@ public enum StatusMenuAction: Int {
     case library
     case settings
     case pauseAll
+    case smokeTest
     case quit
 }
 
@@ -15,6 +16,7 @@ public enum StatusMenu {
             ("Library…", "l", .library),
             ("Settings…", ",", .settings),
             ("Pause All", "p", .pauseAll),
+            ("Debug: Magenta Smoke Test", nil, .smokeTest),
             ("Quit Mural", "q", .quit)
         ]
         for (title, key, menuAction) in entries {

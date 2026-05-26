@@ -1,21 +1,14 @@
 import AppKit
 import OSLog
 
-/// SwiftUI installs `showSettingsWindow:` on NSApplication at runtime
-/// (it's the action behind the standard Cmd-, menu item for a Settings
-/// scene). It isn't declared in any public header, so we forward-declare
-/// it here purely to get a typed #selector reference instead of a stringly
-/// typed Selector(("showSettingsWindow:")).
-@objc private protocol _MuralSettingsAction {
-    func showSettingsWindow(_ sender: Any?)
-}
-
 @MainActor
 public final class StatusItemController: NSObject {
     private let log = Log.logger("StatusItem")
     private let statusItem: NSStatusItem
+    private let onMenuItem: @MainActor (StatusMenuAction) -> Void
 
-    override public init() {
+    public init(onMenuItem: @escaping @MainActor (StatusMenuAction) -> Void) {
+        self.onMenuItem = onMenuItem
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
         if let button = statusItem.button {
@@ -30,15 +23,7 @@ public final class StatusItemController: NSObject {
 
     @objc private func handle(_ sender: NSMenuItem) {
         log.info("Menu: \(sender.title, privacy: .public)")
-        guard let menuAction = StatusMenuAction(rawValue: sender.tag) else { return }
-        switch menuAction {
-        case .settings:
-            NSApp.activate(ignoringOtherApps: true)
-            NSApp.sendAction(#selector(_MuralSettingsAction.showSettingsWindow(_:)), to: nil, from: nil)
-        case .quit:
-            NSApp.terminate(nil)
-        case .library, .pauseAll:
-            break
-        }
+        guard let action = StatusMenuAction(rawValue: sender.tag) else { return }
+        onMenuItem(action)
     }
 }
