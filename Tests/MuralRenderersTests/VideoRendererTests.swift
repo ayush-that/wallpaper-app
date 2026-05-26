@@ -102,4 +102,26 @@ final class VideoRendererTests: XCTestCase {
         XCTAssertEqual(item.preferredPeakBitRate, 1_500_000)
         XCTAssertEqual(item.preferredMaximumResolution, CGSize(width: 1920, height: 1080))
     }
+
+    func test_webm_vp9_loads_and_plays() throws {
+        let url = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(forResource: "red-1s", withExtension: "webm", subdirectory: "Fixtures"),
+            "missing Tests/Fixtures/red-1s.webm"
+        )
+        let renderer = try VideoRenderer(asset: VideoAsset(url: url), scaleMode: .fill)
+        let host = makeHost()
+        renderer.attach(to: host)
+        let layer = try XCTUnwrap(host.layer?.sublayers?.first as? AVPlayerLayer)
+
+        let expectation = expectation(description: "VP9 player rate > 0")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            XCTAssertGreaterThan(
+                layer.player?.rate ?? 0,
+                0,
+                "VP9 didn't start playing — check macOS / AVFoundation VP9 support"
+            )
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 4.0)
+    }
 }
