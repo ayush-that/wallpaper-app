@@ -10,24 +10,69 @@ public enum StatusMenuAction: Int {
 
 @MainActor
 public enum StatusMenu {
-    public static func build(target: AnyObject, action: Selector) -> NSMenu {
+    public static func build(
+        target: AnyObject,
+        action: Selector,
+        scaleAction: Selector,
+        activeScaleMode: ScaleMode = .fill
+    ) -> NSMenu {
         let menu = NSMenu()
-        let entries: [(String, String?, StatusMenuAction)] = [
-            ("Library…", "l", .library),
-            ("Settings…", ",", .settings),
-            ("Pause All", "p", .pauseAll),
-            ("Debug: Magenta Smoke Test", nil, .smokeTest),
-            ("Quit Mural", "q", .quit)
-        ]
-        for (title, key, menuAction) in entries {
-            if menuAction == .quit {
-                menu.addItem(.separator())
-            }
-            let item = NSMenuItem(title: title, action: action, keyEquivalent: key ?? "")
+
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Library…", tag: .library, key: "l"
+        )
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Settings…", tag: .settings, key: ","
+        )
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Pause All", tag: .pauseAll, key: "p"
+        )
+
+        let scaleItem = NSMenuItem(title: "Scale Mode", action: nil, keyEquivalent: "")
+        let submenu = NSMenu(title: "Scale Mode")
+        for mode in ScaleMode.allCases {
+            let item = NSMenuItem(
+                title: "Scale: \(mode.rawValue)",
+                action: scaleAction,
+                keyEquivalent: ""
+            )
             item.target = target
-            item.tag = menuAction.rawValue
-            menu.addItem(item)
+            item.representedObject = mode.rawValue
+            item.state = (mode == activeScaleMode) ? .on : .off
+            submenu.addItem(item)
         }
+        scaleItem.submenu = submenu
+        menu.addItem(scaleItem)
+
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Debug: Magenta Smoke Test", tag: .smokeTest, key: ""
+        )
+
+        menu.addItem(.separator())
+
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Quit Mural", tag: .quit, key: "q"
+        )
+
         return menu
+    }
+
+    private static func addTopLevel(
+        _ menu: NSMenu,
+        target: AnyObject,
+        action: Selector,
+        title: String,
+        tag: StatusMenuAction,
+        key: String
+    ) {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        item.target = target
+        item.tag = tag.rawValue
+        menu.addItem(item)
     }
 }
