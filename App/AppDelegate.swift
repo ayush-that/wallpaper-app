@@ -15,6 +15,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let log = Log.logger("AppDelegate")
     private let settings = SettingsStore()
+    private let propertyOverrideStore = PropertyOverrideStore()
 
     private var statusItem: StatusItemController?
     private var logSink: LogFileSink?
@@ -87,6 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     orchestrator: orchestrator,
                     onPlaylistEnabledChange: { [weak self] playlist in
                         self?.playlistEnabledChanged(playlist)
+                    },
+                    makePropertiesVM: { [weak self] wallpaper in
+                        self?.propertiesViewModel(for: wallpaper)
                     }
                 )
             default:
@@ -135,6 +139,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 orchestrator: orchestrator,
                 onPlaylistEnabledChange: { [weak self] playlist in
                     self?.playlistEnabledChanged(playlist)
+                },
+                makePropertiesVM: { [weak self] wallpaper in
+                    self?.propertiesViewModel(for: wallpaper)
                 }
             )
         case .settings:
@@ -229,6 +236,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         foregroundAppWatcher = foreground
 
         // Fullscreen occlusion (per-display).
+        //
+        // FullscreenWatcher polls `CGWindowListCopyWindowInfo`. On macOS 26 that
+        // API triggers the Screen Recording TCC prompt on every Debug rebuild
+        // (cdhash changes invalidate the prior grant). Until the Phase 11
+        // Settings UI surfaces an explicit opt-in toggle and Phase 12 ships a
+        // notarised Developer ID build (stable cdhash), keep this watcher
+        // dormant. Other watchers (Power, ForegroundApp, RemoteSession,
+        // PerformanceGovernor) don't touch TCC-gated APIs and stay active.
         let fullscreen = FullscreenWatcher(displayProvider: { [weak displayManager] in
             guard let displayManager else { return [:] }
             var out: [String: NSScreen] = [:]
@@ -237,18 +252,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return out
         })
-        fullscreen.start { [weak self] occluded in
-            guard let self else { return }
-            let pauseOnFullscreen = settings.get(.pauseOnFullscreen)
-            for uuid in displayManager.windows.keys {
-                if occluded.contains(uuid), pauseOnFullscreen {
-                    coordinator.add(.fullscreenOccluded, for: uuid)
-                } else {
-                    coordinator.remove(.fullscreenOccluded, for: uuid)
-                }
-            }
-        }
         fullscreenWatcher = fullscreen
+        _ = coordinator // silence unused-warning when start() is gated off; coordinator is captured by other watchers
 
         // Remote session (Screen Sharing, VNC, ARD).
         let remote = RemoteSessionWatcher()
@@ -293,6 +298,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         remoteSessionWatcher?.stop(); remoteSessionWatcher = nil
         performanceGovernor?.stop(); performanceGovernor = nil
         pauseCoordinator = nil
+    }
+
+    private func propertiesViewModel(for wallpaper: Wallpaper) -> PropertiesViewModel? {
+        guard let orchestrator,
+              let libraryService else { return nil }
+        let package = libraryService.package(for: wallpaper.id)
+        guard let controls = try? package.readProperties(), !controls.isEmpty else { return nil }
+        guard let primaryUUID = orchestrator.primaryDisplayUUID() else { return nil }
+        let displayUUIDs = displayManager.map { Array($0.windows.keys) } ?? []
+        let arrangement = DisplayArrangementHash(displayUUIDs: displayUUIDs)
+        let sinks = orchestrator.activePropertySinks()
+        let fanOut = FanOutPropertiesSink(sinks)
+        return PropertiesViewModel(
+            wallpaperID: wallpaper.id,
+            displayUUID: primaryUUID,
+            arrangement: arrangement,
+            controls: controls,
+            sink: fanOut,
+            store: propertyOverrideStore
+        )
     }
 
     private func playlistEnabledChanged(_ playlist: Playlist) {

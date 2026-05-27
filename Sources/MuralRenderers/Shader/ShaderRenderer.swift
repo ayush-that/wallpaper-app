@@ -112,3 +112,40 @@ public final class ShaderRenderer: WallpaperRenderer {
         return try String(contentsOf: url, encoding: .utf8)
     }
 }
+
+// MARK: - PropertiesSink
+
+extension ShaderRenderer: PropertiesSink {
+    /// Phase 9 — translate a property override into a user uniform on the core.
+    /// Scalar values (double/int/bool) land in the `x` channel of a `float4`;
+    /// `.color` is decoded as RGBA. `.string` is not representable as a uniform
+    /// and is silently ignored.
+    public func apply(propertyName: String, value: WebBridgePropertyValue) {
+        switch value {
+        case let .double(v):
+            core.setUserUniform(name: propertyName, value: Float(v))
+        case let .int(v):
+            core.setUserUniform(name: propertyName, value: Float(v))
+        case let .bool(v):
+            core.setUserUniform(name: propertyName, value: v ? 1 : 0)
+        case let .color(hex):
+            core.setUserUniform(name: propertyName, rgba: Self.parseHexColor(hex))
+        case .string:
+            break
+        }
+    }
+
+    /// Parse a `#rrggbb` (or `rrggbb`) hex string into an RGBA `float4` with
+    /// alpha = 1. Invalid strings fall back to opaque white so a broken
+    /// manifest can't blank the render.
+    public static func parseHexColor(_ s: String) -> SIMD4<Float> {
+        let cleaned = s.hasPrefix("#") ? String(s.dropFirst()) : s
+        let value = UInt32(cleaned, radix: 16) ?? 0xFFFFFF
+        return SIMD4<Float>(
+            Float((value >> 16) & 0xFF) / 255,
+            Float((value >> 8) & 0xFF) / 255,
+            Float(value & 0xFF) / 255,
+            1
+        )
+    }
+}

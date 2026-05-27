@@ -24,7 +24,8 @@ public final class LibraryWindowController: NSObject {
         viewModel: LibraryViewModel?,
         playlistsViewModel: PlaylistsViewModel?,
         orchestrator: WallpaperOrchestrator?,
-        onPlaylistEnabledChange: @escaping (Playlist) -> Void = { _ in }
+        onPlaylistEnabledChange: @MainActor @escaping (Playlist) -> Void = { _ in },
+        makePropertiesVM: @MainActor @escaping (Wallpaper) -> PropertiesViewModel? = { _ in nil }
     ) {
         guard let viewModel, let playlistsViewModel, let orchestrator else {
             log.error("Library not available (catalog open failed at launch)")
@@ -42,7 +43,8 @@ public final class LibraryWindowController: NSObject {
             onUseAsWallpaper: { wallpaper in
                 orchestrator.applyToAllDisplays(wallpaper: wallpaper)
             },
-            onPlaylistEnabledChange: onPlaylistEnabledChange
+            onPlaylistEnabledChange: onPlaylistEnabledChange,
+            makePropertiesVM: makePropertiesVM
         )
         let hosting = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hosting)

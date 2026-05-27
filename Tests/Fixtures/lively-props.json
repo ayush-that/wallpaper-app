@@ -1,0 +1,10 @@
+{
+  "speed":  { "type": "slider", "value": 1.0, "min": 0.0, "max": 2.0, "step": 0.1, "text": "Speed" },
+  "tint":   { "type": "color", "value": "#ff8800", "text": "Tint" },
+  "smooth": { "type": "checkbox", "value": true, "text": "Smooth" },
+  "label":  { "type": "label", "value": "About this wallpaper" },
+  "engine": { "type": "dropdown", "items": ["webgl", "canvas"], "value": 0, "text": "Engine" },
+  "asset":  { "type": "folderDropdown", "folder": "backgrounds", "filter": "*.png", "value": "a.png", "text": "Asset" },
+  "title":  { "type": "textbox", "value": "Hello", "text": "Title" },
+  "reset":  { "type": "button", "value": "reset", "text": "Reset" }
+}

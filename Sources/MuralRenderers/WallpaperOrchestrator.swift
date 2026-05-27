@@ -129,4 +129,20 @@ public final class WallpaperOrchestrator: ObservableObject {
         await audio.stop()
         audioStarted = false
     }
+
+    /// Snapshot of the currently active `PropertiesSink`s, one per display.
+    /// PropertiesViewModel calls into each sink so a single slider drag updates
+    /// every display's renderer simultaneously.
+    public func activePropertySinks() -> [PropertiesSink] {
+        engine.activeRendererUUIDs.compactMap { uuid in
+            engine.renderer(for: uuid) as? PropertiesSink
+        }
+    }
+
+    /// UUID of the "primary" display for property-override scoping. macOS doesn't
+    /// expose a stable "primary" concept here; we pick the first attached display
+    /// alphabetically so per-display overrides are deterministic across launches.
+    public func primaryDisplayUUID() -> String? {
+        engine.activeRendererUUIDs.sorted().first
+    }
 }

@@ -261,6 +261,14 @@ private extension WebRenderer {
     }
 }
 
+// MARK: - PropertiesSink
+
+extension WebRenderer: PropertiesSink {
+    public func apply(propertyName: String, value: WebBridgePropertyValue) {
+        set(property: propertyName, value: value)
+    }
+}
+
 /// Sendable weak holder so audio broadcaster handlers can reference the
 /// `@MainActor`-isolated `WebRenderer` without forcing a strong capture.
 /// The `@unchecked Sendable` is justified: `weak` references are atomic on
