@@ -59,3 +59,20 @@ public struct WallpaperPackage: Sendable {
         return root.appendingPathComponent(rel)
     }
 }
+
+public extension WallpaperPackage {
+    /// URL of the optional `LivelyProperties.json` next to `wallpaper.json`.
+    /// Returns the URL regardless of whether the file exists.
+    var propertiesURL: URL {
+        root.appendingPathComponent("LivelyProperties.json")
+    }
+
+    /// Decode the wallpaper's customization controls. Returns nil when the
+    /// file is absent (most wallpapers don't ship one). Throws on parse errors.
+    func readProperties() throws -> [PropertyControl]? {
+        let url = propertiesURL
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let data = try Data(contentsOf: url)
+        return try LivelyPropertiesCodec.decode(data)
+    }
+}

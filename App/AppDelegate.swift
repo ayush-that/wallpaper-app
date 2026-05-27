@@ -15,6 +15,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let log = Log.logger("AppDelegate")
     private let settings = SettingsStore()
+    private let propertyOverrideStore = PropertyOverrideStore()
 
     private var statusItem: StatusItemController?
     private var logSink: LogFileSink?
@@ -87,6 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     orchestrator: orchestrator,
                     onPlaylistEnabledChange: { [weak self] playlist in
                         self?.playlistEnabledChanged(playlist)
+                    },
+                    makePropertiesVM: { [weak self] wallpaper in
+                        self?.propertiesViewModel(for: wallpaper)
                     }
                 )
             default:
@@ -135,6 +139,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 orchestrator: orchestrator,
                 onPlaylistEnabledChange: { [weak self] playlist in
                     self?.playlistEnabledChanged(playlist)
+                },
+                makePropertiesVM: { [weak self] wallpaper in
+                    self?.propertiesViewModel(for: wallpaper)
                 }
             )
         case .settings:
@@ -291,6 +298,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         remoteSessionWatcher?.stop(); remoteSessionWatcher = nil
         performanceGovernor?.stop(); performanceGovernor = nil
         pauseCoordinator = nil
+    }
+
+    private func propertiesViewModel(for wallpaper: Wallpaper) -> PropertiesViewModel? {
+        guard let orchestrator,
+              let libraryService else { return nil }
+        let package = libraryService.package(for: wallpaper.id)
+        guard let controls = try? package.readProperties(), !controls.isEmpty else { return nil }
+        guard let primaryUUID = orchestrator.primaryDisplayUUID() else { return nil }
+        let displayUUIDs = displayManager.map { Array($0.windows.keys) } ?? []
+        let arrangement = DisplayArrangementHash(displayUUIDs: displayUUIDs)
+        let sinks = orchestrator.activePropertySinks()
+        let fanOut = FanOutPropertiesSink(sinks)
+        return PropertiesViewModel(
+            wallpaperID: wallpaper.id,
+            displayUUID: primaryUUID,
+            arrangement: arrangement,
+            controls: controls,
+            sink: fanOut,
+            store: propertyOverrideStore
+        )
     }
 
     private func playlistEnabledChanged(_ playlist: Playlist) {

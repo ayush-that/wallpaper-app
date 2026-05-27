@@ -9,3 +9,20 @@ import Foundation
 public protocol PropertiesSink: AnyObject {
     func apply(propertyName: String, value: WebBridgePropertyValue)
 }
+
+/// Fans a single `apply` call out to every wrapped sink. Used when the UI
+/// wants per-display renderers to react in lockstep to a single slider drag.
+@MainActor
+public final class FanOutPropertiesSink: PropertiesSink {
+    private let sinks: [PropertiesSink]
+
+    public init(_ sinks: [PropertiesSink]) {
+        self.sinks = sinks
+    }
+
+    public func apply(propertyName: String, value: WebBridgePropertyValue) {
+        for sink in sinks {
+            sink.apply(propertyName: propertyName, value: value)
+        }
+    }
+}
