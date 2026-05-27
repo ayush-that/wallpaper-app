@@ -14,11 +14,21 @@ import SwiftUI
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let log = Log.logger("AppDelegate")
+    private let settings = SettingsStore()
+
     private var statusItem: StatusItemController?
     private var logSink: LogFileSink?
     private var displayManager: DisplayManager?
     private var engine: WallpaperEngine?
     private var activeScaleMode: ScaleMode = .fill
+
+    // Phase 7: pause/throttle policy stack.
+    private var pauseCoordinator: PauseCoordinator?
+    private var powerWatcher: PowerWatcher?
+    private var foregroundAppWatcher: ForegroundAppWatcher?
+    private var fullscreenWatcher: FullscreenWatcher?
+    private var remoteSessionWatcher: RemoteSessionWatcher?
+    private var performanceGovernor: PerformanceGovernor?
 
     private(set) var libraryService: LibraryService?
     private(set) var libraryViewModel: LibraryViewModel?
@@ -32,11 +42,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let mgr = DisplayManager()
         mgr.start()
         displayManager = mgr
-        engine = WallpaperEngine(displayManager: mgr)
+        let engine = WallpaperEngine(displayManager: mgr)
+        self.engine = engine
 
         setupLibrary()
 
         SystemWallpaperOverride.applyAll()
+
+        setupPolicyWatchers(engine: engine, displayManager: mgr)
 
         statusItem = StatusItemController(
             onMenuItem: { [weak self] action in self?.handle(action) },
@@ -58,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_: Notification) {
+        teardownPolicyWatchers()
         displayManager?.shutdown()
     }
 
@@ -135,6 +149,126 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func setupPolicyWatchers(engine: WallpaperEngine, displayManager: DisplayManager) {
+        // `WallpaperRenderer` is `AnyObject` but not `Sendable`, so it can't be
+        // returned directly from a `MainActor.assumeIsolated` block in a
+        // `@Sendable` lookup closure under strict concurrency. Wrap both the
+        // engine handoff and the renderer carry-out in `@unchecked Sendable`
+        // boxes — lookups are only ever invoked on MainActor (PauseCoordinator
+        // hops there before calling), so the unchecked annotation is sound.
+        let engineBox = EngineLookupBox(engine)
+        let coordinator = PauseCoordinator { uuid in
+            let carrier = MainActor.assumeIsolated {
+                RendererCarrier(engineBox.engine.renderer(for: uuid))
+            }
+            return carrier.renderer
+        }
+        pauseCoordinator = coordinator
+
+        // Power: battery + Low Power Mode.
+        let power = PowerWatcher()
+        power.start { [weak self] onBattery, lowPower in
+            guard let self else { return }
+            let pauseOnBattery = settings.get(.pauseOnBattery)
+            let pauseOnLowPower = settings.get(.pauseOnLowPowerMode)
+            for uuid in displayManager.windows.keys {
+                if onBattery, pauseOnBattery {
+                    coordinator.add(.onBattery, for: uuid)
+                } else {
+                    coordinator.remove(.onBattery, for: uuid)
+                }
+                if lowPower, pauseOnLowPower {
+                    coordinator.add(.lowPowerMode, for: uuid)
+                } else {
+                    coordinator.remove(.lowPowerMode, for: uuid)
+                }
+            }
+        }
+        powerWatcher = power
+
+        // Foreground app rule (Zoom, Keynote, Slack, etc).
+        let foreground = ForegroundAppWatcher()
+        foreground.start { [weak self] bundleID in
+            guard let self else { return }
+            let rules = settings.get(.appPauseRules)
+            let matched = rules.match(bundleID: bundleID) != nil
+            for uuid in displayManager.windows.keys {
+                if matched {
+                    coordinator.add(.foregroundAppRule, for: uuid)
+                } else {
+                    coordinator.remove(.foregroundAppRule, for: uuid)
+                }
+            }
+        }
+        foregroundAppWatcher = foreground
+
+        // Fullscreen occlusion (per-display).
+        let fullscreen = FullscreenWatcher(displayProvider: { [weak displayManager] in
+            guard let displayManager else { return [:] }
+            var out: [String: NSScreen] = [:]
+            for (uuid, window) in displayManager.windows {
+                if let screen = window.screen { out[uuid] = screen }
+            }
+            return out
+        })
+        fullscreen.start { [weak self] occluded in
+            guard let self else { return }
+            let pauseOnFullscreen = settings.get(.pauseOnFullscreen)
+            for uuid in displayManager.windows.keys {
+                if occluded.contains(uuid), pauseOnFullscreen {
+                    coordinator.add(.fullscreenOccluded, for: uuid)
+                } else {
+                    coordinator.remove(.fullscreenOccluded, for: uuid)
+                }
+            }
+        }
+        fullscreenWatcher = fullscreen
+
+        // Remote session (Screen Sharing, VNC, ARD).
+        let remote = RemoteSessionWatcher()
+        remote.start { isRemote in
+            for uuid in displayManager.windows.keys {
+                if isRemote {
+                    coordinator.add(.remoteSession, for: uuid)
+                } else {
+                    coordinator.remove(.remoteSession, for: uuid)
+                }
+            }
+        }
+        remoteSessionWatcher = remote
+
+        // Thermal governor — clamps every active renderer on heat.
+        let governor = PerformanceGovernor(
+            videoApply: { [weak engine] bitrate, maxPixels in
+                guard let engine else { return }
+                for uuid in engine.activeRendererUUIDs {
+                    if let video = engine.renderer(for: uuid) as? VideoRenderer {
+                        video.setPreferredCeiling(bitrateBPS: bitrate, maxPixels: maxPixels)
+                    }
+                }
+            },
+            shaderApply: { [weak engine] fps in
+                guard let engine else { return }
+                for uuid in engine.activeRendererUUIDs {
+                    if let shader = engine.renderer(for: uuid) as? ShaderRenderer {
+                        shader.setPreferredFPS(fps)
+                    }
+                }
+            }
+        )
+        governor.start()
+        performanceGovernor = governor
+    }
+
+    private func teardownPolicyWatchers() {
+        powerWatcher?.stop(); powerWatcher = nil
+        foregroundAppWatcher?.stop(); foregroundAppWatcher = nil
+        fullscreenWatcher?.stop(); fullscreenWatcher = nil
+        remoteSessionWatcher?.stop(); remoteSessionWatcher = nil
+        performanceGovernor?.stop(); performanceGovernor = nil
+        pauseCoordinator = nil
+    }
+
     private func dropped(_ url: URL) {
         guard let engine else { return }
         do {
@@ -160,5 +294,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 private extension Bundle {
     var shortVersionString: String {
         (infoDictionary?["CFBundleShortVersionString"] as? String) ?? "?"
+    }
+}
+
+/// `WallpaperEngine` is `@MainActor`-isolated and its renderer values are
+/// non-Sendable. To hand the engine to `PauseCoordinator`'s `@Sendable` lookup
+/// closure we wrap it in an `@unchecked Sendable` box; the engine is only ever
+/// touched on MainActor via `assumeIsolated`.
+private final class EngineLookupBox: @unchecked Sendable {
+    let engine: WallpaperEngine
+    init(_ engine: WallpaperEngine) {
+        self.engine = engine
+    }
+}
+
+/// Carries a non-Sendable `WallpaperRenderer?` out of a `MainActor.assumeIsolated`
+/// block without tripping the strict-concurrency Sendable check on the return
+/// value. The coordinator only ever uses the result back on MainActor.
+private final class RendererCarrier: @unchecked Sendable {
+    let renderer: WallpaperRenderer?
+    init(_ renderer: WallpaperRenderer?) {
+        self.renderer = renderer
     }
 }
