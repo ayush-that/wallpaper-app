@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var libraryViewModel: LibraryViewModel?
     private(set) var playlistsViewModel: PlaylistsViewModel?
     private(set) var orchestrator: WallpaperOrchestrator?
+    private(set) var observableSettings: ObservableSettings?
 
     private var controlSocket: ControlSocket?
 
@@ -51,6 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.engine = engine
 
         setupLibrary()
+
+        observableSettings = ObservableSettings(store: settings)
 
         SystemWallpaperOverride.applyAll()
 

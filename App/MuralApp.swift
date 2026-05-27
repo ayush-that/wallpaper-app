@@ -6,9 +6,21 @@ struct MuralApp: App {
 
     var body: some Scene {
         Settings {
-            Text("Mural")
-                .padding()
-                .frame(width: 480, height: 320)
+            SettingsRoot(appDelegate: appDelegate)
+        }
+    }
+}
+
+/// Bridges AppDelegate's `ObservableSettings?` into the SwiftUI scene.
+/// When AppDelegate hasn't fully initialised yet (rare — only during the
+/// very first frame), shows a placeholder.
+private struct SettingsRoot: View {
+    let appDelegate: AppDelegate
+    var body: some View {
+        if let settings = appDelegate.observableSettings {
+            SettingsRootView(settings: settings)
+        } else {
+            Text("Loading settings…").padding()
         }
     }
 }
