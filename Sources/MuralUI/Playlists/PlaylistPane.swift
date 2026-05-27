@@ -3,11 +3,17 @@ import SwiftUI
 public struct PlaylistPane: View {
     @ObservedObject public var vm: PlaylistsViewModel
     public let availableWallpapers: [Wallpaper]
+    public var onPlaylistEnabledChange: (Playlist) -> Void
     @State private var editing: Playlist?
 
-    public init(vm: PlaylistsViewModel, availableWallpapers: [Wallpaper]) {
+    public init(
+        vm: PlaylistsViewModel,
+        availableWallpapers: [Wallpaper],
+        onPlaylistEnabledChange: @escaping (Playlist) -> Void = { _ in }
+    ) {
         self.vm = vm
         self.availableWallpapers = availableWallpapers
+        self.onPlaylistEnabledChange = onPlaylistEnabledChange
     }
 
     public var body: some View {
@@ -41,7 +47,12 @@ public struct PlaylistPane: View {
                             Spacer()
                             Toggle("", isOn: Binding(
                                 get: { playlist.enabled },
-                                set: { _ in vm.toggle(playlist) }
+                                set: { _ in
+                                    vm.toggle(playlist)
+                                    var updated = playlist
+                                    updated.enabled.toggle()
+                                    onPlaylistEnabledChange(updated)
+                                }
                             ))
                             .labelsHidden()
                             Button("Edit") { editing = playlist }
@@ -63,6 +74,7 @@ public struct PlaylistPane: View {
                 availableWallpapers: availableWallpapers,
                 onSave: { saved in
                     vm.save(saved)
+                    onPlaylistEnabledChange(saved)
                     editing = nil
                 },
                 onCancel: { editing = nil }

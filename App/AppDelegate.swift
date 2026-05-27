@@ -33,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private(set) var libraryService: LibraryService?
     private(set) var libraryViewModel: LibraryViewModel?
+    private(set) var playlistsViewModel: PlaylistsViewModel?
     private(set) var orchestrator: WallpaperOrchestrator?
 
     func applicationDidFinishLaunching(_: Notification) {
@@ -82,7 +83,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case "library":
                 LibraryWindowController.shared.open(
                     viewModel: libraryViewModel,
-                    orchestrator: orchestrator
+                    playlistsViewModel: playlistsViewModel,
+                    orchestrator: orchestrator,
+                    onPlaylistEnabledChange: { [weak self] playlist in
+                        self?.playlistEnabledChanged(playlist)
+                    }
                 )
             default:
                 log.warning("Unhandled mural:// host: \(url.host ?? "nil", privacy: .public)")
@@ -98,6 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let library = LibraryService(libraryRoot: libRoot, catalog: catalog)
             libraryService = library
             libraryViewModel = LibraryViewModel(service: library)
+            playlistsViewModel = PlaylistsViewModel(catalog: catalog)
             if let engine {
                 orchestrator = WallpaperOrchestrator(engine: engine, library: library)
             }
@@ -125,7 +131,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .library:
             LibraryWindowController.shared.open(
                 viewModel: libraryViewModel,
-                orchestrator: orchestrator
+                playlistsViewModel: playlistsViewModel,
+                orchestrator: orchestrator,
+                onPlaylistEnabledChange: { [weak self] playlist in
+                    self?.playlistEnabledChanged(playlist)
+                }
             )
         case .settings:
             NSApp.activate(ignoringOtherApps: true)
@@ -283,6 +293,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         remoteSessionWatcher?.stop(); remoteSessionWatcher = nil
         performanceGovernor?.stop(); performanceGovernor = nil
         pauseCoordinator = nil
+    }
+
+    private func playlistEnabledChanged(_ playlist: Playlist) {
+        guard let orchestrator else { return }
+        if playlist.enabled {
+            orchestrator.startPlaylist(playlist)
+        } else {
+            orchestrator.stopPlaylist()
+        }
     }
 
     private func dropped(_ url: URL) {
