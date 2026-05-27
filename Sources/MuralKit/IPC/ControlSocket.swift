@@ -9,7 +9,7 @@ import OSLog
 public final class ControlSocket {
     public typealias Handler = @Sendable (Command) async -> CommandResponse
 
-    public static let defaultPath = "\(NSHomeDirectory())/Library/Application Support/Mural/control.sock"
+    public static let defaultPath = Client.defaultSocketPath
 
     private let log = Log.logger("ControlSocket")
     private let path: String
