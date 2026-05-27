@@ -35,11 +35,16 @@ public final class FullscreenWatcher {
         let timer = DispatchSource.makeTimerSource(queue: queue)
         timer.schedule(deadline: .now(), repeating: pollInterval)
         let coverage = coverageThreshold
+        let selfPID = ProcessInfo.processInfo.processIdentifier
         timer.setEventHandler { [weak self] in
             guard let self else { return }
             Task { @MainActor in
                 let displays = self.displayProvider()
-                let occluded = Self.scan(displays: displays, coverageThreshold: coverage)
+                let occluded = Self.scan(
+                    displays: displays,
+                    coverageThreshold: coverage,
+                    selfPID: selfPID
+                )
                 onChange(occluded)
             }
         }
@@ -54,8 +59,15 @@ public final class FullscreenWatcher {
 
     /// Pure function: given a snapshot of displays and a coverage threshold,
     /// returns the set of display UUIDs occluded by a non-Mural window.
+    /// `selfPID` lets us filter out our own windows reliably (the name-based
+    /// match on `kCGWindowOwnerName == "Mural"` is unreliable on macOS 26+ —
+    /// the field can be `nil` or redacted for the current process).
     /// Public for testability.
-    public static func scan(displays: [String: NSScreen], coverageThreshold: CGFloat) -> Set<String> {
+    public static func scan(
+        displays: [String: NSScreen],
+        coverageThreshold: CGFloat,
+        selfPID: pid_t = ProcessInfo.processInfo.processIdentifier
+    ) -> Set<String> {
         guard !displays.isEmpty else { return [] }
         let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
         guard let raw = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] else {
@@ -70,8 +82,14 @@ public final class FullscreenWatcher {
             for window in raw {
                 let layer = (window[kCGWindowLayer as String] as? Int) ?? 0
                 if layer < 0 { continue } // below us; ignore
+                // Filter our own windows by PID (reliable) and name (fallback).
+                if let ownerPID = window[kCGWindowOwnerPID as String] as? pid_t,
+                   ownerPID == selfPID
+                {
+                    continue
+                }
                 if let owner = window[kCGWindowOwnerName as String] as? String, owner == "Mural" {
-                    continue // ourselves
+                    continue
                 }
                 guard let geom = window[kCGWindowBounds as String] as? [String: CGFloat] else { continue }
                 let rect = CGRect(
