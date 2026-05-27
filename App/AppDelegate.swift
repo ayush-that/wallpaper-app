@@ -229,6 +229,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         foregroundAppWatcher = foreground
 
         // Fullscreen occlusion (per-display).
+        //
+        // FullscreenWatcher polls `CGWindowListCopyWindowInfo`. On macOS 26 that
+        // API triggers the Screen Recording TCC prompt on every Debug rebuild
+        // (cdhash changes invalidate the prior grant). Until the Phase 11
+        // Settings UI surfaces an explicit opt-in toggle and Phase 12 ships a
+        // notarised Developer ID build (stable cdhash), keep this watcher
+        // dormant. Other watchers (Power, ForegroundApp, RemoteSession,
+        // PerformanceGovernor) don't touch TCC-gated APIs and stay active.
         let fullscreen = FullscreenWatcher(displayProvider: { [weak displayManager] in
             guard let displayManager else { return [:] }
             var out: [String: NSScreen] = [:]
@@ -237,18 +245,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return out
         })
-        fullscreen.start { [weak self] occluded in
-            guard let self else { return }
-            let pauseOnFullscreen = settings.get(.pauseOnFullscreen)
-            for uuid in displayManager.windows.keys {
-                if occluded.contains(uuid), pauseOnFullscreen {
-                    coordinator.add(.fullscreenOccluded, for: uuid)
-                } else {
-                    coordinator.remove(.fullscreenOccluded, for: uuid)
-                }
-            }
-        }
         fullscreenWatcher = fullscreen
+        _ = coordinator // silence unused-warning when start() is gated off; coordinator is captured by other watchers
 
         // Remote session (Screen Sharing, VNC, ARD).
         let remote = RemoteSessionWatcher()
