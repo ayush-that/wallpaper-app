@@ -72,4 +72,28 @@ final class StatusMenuTests: XCTestCase {
         let rawValues = (submenu?.items ?? []).compactMap { $0.representedObject as? String }
         XCTAssertEqual(Set(rawValues), Set(ScaleMode.allCases.map(\.rawValue)))
     }
+
+    func test_pause_all_label_is_customisable() {
+        let menu = StatusMenu.build(
+            target: NSObject(),
+            action: #selector(NSObject.description),
+            scaleAction: #selector(NSObject.description),
+            activeScaleMode: .fill,
+            pauseLabel: "Resume All"
+        )
+        let titles = menu.items.map(\.title)
+        XCTAssertTrue(titles.contains("Resume All"))
+        XCTAssertFalse(titles.contains("Pause All"))
+    }
+
+    func test_pause_all_label_defaults_to_Pause_All() {
+        let menu = StatusMenu.build(
+            target: NSObject(),
+            action: #selector(NSObject.description),
+            scaleAction: #selector(NSObject.description),
+            activeScaleMode: .fill
+        )
+        let titles = menu.items.map(\.title)
+        XCTAssertTrue(titles.contains("Pause All"))
+    }
 }

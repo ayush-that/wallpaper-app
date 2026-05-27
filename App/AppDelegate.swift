@@ -21,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var displayManager: DisplayManager?
     private var engine: WallpaperEngine?
     private var activeScaleMode: ScaleMode = .fill
+    private var userPaused = false
 
     // Phase 7: pause/throttle policy stack.
     private var pauseCoordinator: PauseCoordinator?
@@ -55,7 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onMenuItem: { [weak self] action in self?.handle(action) },
             onVideoDrop: { [weak self] url in self?.dropped(url) },
             onScaleChange: { [weak self] mode in self?.setScale(mode) },
-            activeScaleMode: activeScaleMode
+            activeScaleMode: activeScaleMode,
+            pauseLabel: userPaused ? "Resume All" : "Pause All"
         )
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
@@ -130,12 +132,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.sendAction(#selector(_MuralSettingsAction.showSettingsWindow(_:)), to: nil, from: nil)
         case .pauseAll:
-            engine?.pauseAll()
+            toggleUserPause()
         case .smokeTest:
             engine?.setRendererForAllDisplays(factory: { SolidColorRenderer(color: .magenta) })
         case .quit:
             NSApp.terminate(nil)
         }
+    }
+
+    private func toggleUserPause() {
+        userPaused.toggle()
+        let coordinator = pauseCoordinator
+        if let displayManager {
+            for uuid in displayManager.windows.keys {
+                if userPaused {
+                    coordinator?.add(.userPaused, for: uuid)
+                } else {
+                    coordinator?.remove(.userPaused, for: uuid)
+                }
+            }
+        }
+        statusItem?.rebuildMenu(pauseLabel: userPaused ? "Resume All" : "Pause All")
     }
 
     private func setScale(_ mode: ScaleMode) {

@@ -14,7 +14,8 @@ public enum StatusMenu {
         target: AnyObject,
         action: Selector,
         scaleAction: Selector,
-        activeScaleMode: ScaleMode = .fill
+        activeScaleMode: ScaleMode = .fill,
+        pauseLabel: String = "Pause All"
     ) -> NSMenu {
         let menu = NSMenu()
 
@@ -28,7 +29,7 @@ public enum StatusMenu {
         )
         addTopLevel(
             menu, target: target, action: action,
-            title: "Pause All", tag: .pauseAll, key: "p"
+            title: pauseLabel, tag: .pauseAll, key: "p"
         )
 
         let scaleItem = NSMenuItem(title: "Scale Mode", action: nil, keyEquivalent: "")
