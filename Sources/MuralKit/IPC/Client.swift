@@ -54,8 +54,18 @@ public struct Client {
                             readLoop(connection: connection, buffer: buffer, box: box)
                         }
                     })
-                case let .failed(error):
-                    box.resume(throwing: ClientError.connectionFailed(error))
+                case .failed:
+                    // Unix domain sockets on macOS 14+ transition to `.failed`
+                    // (NWError 50 "Network is down") instead of `.cancelled`
+                    // after the peer closes — Apple's Network.framework wasn't
+                    // designed for half-duplex datagram-style flows. If we
+                    // already accumulated a full JSON response, decode it
+                    // rather than reporting a transport failure.
+                    if let data = buffer.snapshot, !data.isEmpty {
+                        decodeAndResume(data: data, box: box)
+                    } else if !box.didResume {
+                        box.resume(throwing: ClientError.noResponse)
+                    }
                     connection.cancel()
                 case let .waiting(error):
                     // Unix sockets never recover from `.waiting` (the file just
@@ -80,12 +90,20 @@ public struct Client {
 
 private func readLoop(connection: NWConnection, buffer: ClientDataBox, box: ClientResumeBox) {
     connection.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { data, _, isComplete, error in
+        if let data { buffer.append(data) }
         if let error {
-            box.resume(throwing: ClientError.connectionFailed(error))
+            // Same compensation as the stateUpdateHandler's `.failed`: Unix
+            // sockets surface peer-close as an EOF error in the receive
+            // callback. If we have a complete payload buffered, treat the
+            // error as success.
+            if let snapshot = buffer.snapshot, !snapshot.isEmpty {
+                decodeAndResume(data: snapshot, box: box)
+            } else if !box.didResume {
+                box.resume(throwing: ClientError.connectionFailed(error))
+            }
             connection.cancel()
             return
         }
-        if let data { buffer.append(data) }
         if isComplete {
             if let snapshot = buffer.snapshot, !snapshot.isEmpty {
                 decodeAndResume(data: snapshot, box: box)
