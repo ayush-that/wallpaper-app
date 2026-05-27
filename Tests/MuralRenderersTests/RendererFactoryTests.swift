@@ -115,10 +115,14 @@ final class RendererFactoryTests: XCTestCase {
         XCTAssertTrue(renderer is SolidColorRenderer)
     }
 
-    func test_gif_still_returns_placeholder_until_phase_6() throws {
-        let entry = pkgRoot.appendingPathComponent("clip.gif")
-        try Data([0x00]).write(to: entry)
-        let wallpaper = Wallpaper(title: "x", type: .gif, entryRelativePath: "clip.gif")
+    func test_gif_wallpaper_yields_gif_renderer() throws {
+        let src = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(forResource: "2frame", withExtension: "gif", subdirectory: "Fixtures"),
+            "missing Tests/Fixtures/2frame.gif"
+        )
+        let entry = pkgRoot.appendingPathComponent("anim.gif")
+        try FileManager.default.copyItem(at: src, to: entry)
+        let wallpaper = Wallpaper(title: "gif test", type: .gif, entryRelativePath: "anim.gif")
         let package = WallpaperPackage(root: pkgRoot)
         try package.writeMetadata(wallpaper)
 
@@ -127,7 +131,7 @@ final class RendererFactoryTests: XCTestCase {
             package: package,
             scaleMode: .fill
         )
-        XCTAssertTrue(renderer is SolidColorRenderer)
+        XCTAssertTrue(renderer is GIFRenderer)
     }
 
     func test_shader_wallpaper_yields_shader_renderer() throws {

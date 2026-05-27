@@ -46,6 +46,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
+
+        // Attempt to enable audio reactivity at launch. The orchestrator's
+        // enableAudio() trusts SCStream's own permission error path rather than
+        // CGPreflightScreenCaptureAccess() (which checks the legacy TCC bucket
+        // and lies on macOS 15+). If permission is missing, SCStream raises and
+        // the orchestrator surfaces the TCC sheet.
+        if let orchestrator {
+            Task { await orchestrator.enableAudio() }
+        }
     }
 
     func applicationWillTerminate(_: Notification) {

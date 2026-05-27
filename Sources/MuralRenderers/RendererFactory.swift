@@ -8,8 +8,8 @@ public enum RendererFactoryError: Error, Equatable {
 /// Maps a `Wallpaper` to the concrete renderer that should draw it. Resolves
 /// the entry asset against the package root and constructs the right renderer
 /// for the wallpaper's `type`. Types whose real renderers ship in later phases
-/// (gif, appWindow) currently return a dark-grey `SolidColorRenderer`
-/// placeholder so the library remains a usable chooser.
+/// (`appWindow`) currently return a dark-grey `SolidColorRenderer` placeholder
+/// so the library remains a usable chooser.
 public enum RendererFactory {
     @MainActor
     public static func makeRenderer(
@@ -38,7 +38,9 @@ public enum RendererFactory {
         case .shader:
             let isShaderToyStyle = wallpaper.entryRelativePath.hasSuffix(".glsl")
             return try ShaderRenderer(shaderURL: entry, isShaderToyStyle: isShaderToyStyle)
-        case .gif, .appWindow:
+        case .gif:
+            return try GIFRenderer(url: entry, scaleMode: scaleMode)
+        case .appWindow:
             return placeholder()
         }
     }

@@ -14,6 +14,10 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
     /// needs to observe console / propertyChanged / ready events.
     public var onBridgeMessage: (@MainActor (WebBridgeMessage) -> Void)?
 
+    /// Active audio subscription. The broadcaster is retained alongside the token
+    /// so `detach()` can unsubscribe without the caller having to pass it back in.
+    private var currentAudioToken: (AudioBroadcaster, AudioBroadcaster.Token)?
+
     public init(entryURL: URL, packageRoot: URL) {
         self.entryURL = entryURL
         self.packageRoot = packageRoot
@@ -37,6 +41,10 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
     }
 
     public func detach() {
+        if let (broadcaster, token) = currentAudioToken {
+            broadcaster.unsubscribe(token)
+            currentAudioToken = nil
+        }
         webView.stopLoading()
         webView.loadHTMLString("", baseURL: nil)
         host?.clear()
@@ -75,6 +83,42 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
         let payload = audioArray.map { String($0) }.joined(separator: ",")
         let js = "try{livelyAudioListener([\(payload)]);}catch(e){}"
         webView.evaluateJavaScript(js, completionHandler: nil)
+    }
+
+    /// Subscribe to an audio broadcaster. The broadcaster will call
+    /// `deliver(audioArray:)` on each FFT tick. Idempotent — re-attaching to
+    /// the same (or a different) broadcaster replaces the prior subscription.
+    public func attachAudio(_ broadcaster: AudioBroadcaster) {
+        if let (currentBroadcaster, token) = currentAudioToken {
+            currentBroadcaster.unsubscribe(token)
+            currentAudioToken = nil
+        }
+        // The handler runs on the broadcaster's publisher thread (main, in the
+        // current pipeline). We hop to main explicitly so the contract holds
+        // even if a future publisher posts off-main. `WebRendererWeakBox` lets
+        // us weakly reference a `@MainActor` class from a `@Sendable` closure
+        // without tripping Swift 6 strict-concurrency diagnostics.
+        let box = WebRendererWeakBox(self)
+        let token = broadcaster.subscribe { bins in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    box.value?.deliver(audioArray: bins)
+                }
+            }
+        }
+        currentAudioToken = (broadcaster, token)
+    }
+
+    /// Unsubscribe from `broadcaster` if it is the currently-attached one.
+    /// Detaching from a different broadcaster is a no-op so callers don't
+    /// accidentally tear down an unrelated subscription.
+    public func detachAudio(from broadcaster: AudioBroadcaster) {
+        if let (currentBroadcaster, token) = currentAudioToken,
+           currentBroadcaster === broadcaster
+        {
+            broadcaster.unsubscribe(token)
+            currentAudioToken = nil
+        }
     }
 
     // MARK: - Helpers
@@ -214,5 +258,16 @@ private extension WebRenderer {
             log.info("[web/\(level, privacy: .public)] \(text, privacy: .public)")
         }
         onBridgeMessage?(bridgeMessage)
+    }
+}
+
+/// Sendable weak holder so audio broadcaster handlers can reference the
+/// `@MainActor`-isolated `WebRenderer` without forcing a strong capture.
+/// The `@unchecked Sendable` is justified: `weak` references are atomic on
+/// Apple platforms, and the box is only read after a hop to the main actor.
+private final class WebRendererWeakBox: @unchecked Sendable {
+    weak var value: WebRenderer?
+    init(_ value: WebRenderer) {
+        self.value = value
     }
 }
