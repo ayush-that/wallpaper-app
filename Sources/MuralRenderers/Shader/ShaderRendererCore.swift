@@ -30,6 +30,13 @@ public final class ShaderRendererCore: NSObject, MTKViewDelegate {
     private var frame: Int32 = 0
     public var isPaused = false
 
+    /// Phase 9 user uniforms — written by `PropertiesSink.apply` on `ShaderRenderer`
+    /// and packed into fragment buffer slot 1 every frame. Dictionary keys are
+    /// property names; the on-GPU layout sorts by name so a shader can declare
+    /// `constant float4 user[16] [[buffer(1)]]` and address slots positionally.
+    private var userUniforms: [String: SIMD4<Float>] = [:]
+    private let maxUserUniforms = 16
+
     public init(device: MTLDevice, mslSource: String, pixelFormat: MTLPixelFormat) throws {
         self.device = device
         guard let queue = device.makeCommandQueue() else {
@@ -87,10 +94,44 @@ public final class ShaderRendererCore: NSObject, MTKViewDelegate {
             length: MemoryLayout<ShaderUniforms>.stride,
             index: 0
         )
+
+        // Pack user uniforms into a fixed-size 16-slot float4 array. Sorted by
+        // name so the GPU layout is deterministic — shaders that opt in declare
+        // `constant float4 user[16] [[buffer(1)]]`; shaders that don't simply
+        // ignore the binding.
+        var userBuffer = [SIMD4<Float>](
+            repeating: SIMD4<Float>(0, 0, 0, 0),
+            count: maxUserUniforms
+        )
+        for (index, name) in userUniforms.keys.sorted().enumerated() where index < maxUserUniforms {
+            userBuffer[index] = userUniforms[name] ?? .zero
+        }
+        encoder.setFragmentBytes(
+            &userBuffer,
+            length: MemoryLayout<SIMD4<Float>>.stride * maxUserUniforms,
+            index: 1
+        )
+
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         buffer.present(drawable)
         buffer.commit()
+    }
+
+    /// Write (or overwrite) a single-channel user uniform. The value lands in
+    /// the `x` channel of a `float4`; remaining channels are zero.
+    public func setUserUniform(name: String, value: Float) {
+        setUserUniform(name: name, rgba: SIMD4<Float>(value, 0, 0, 0))
+    }
+
+    /// Write (or overwrite) a four-channel user uniform — typically an RGBA
+    /// colour. Silently drops new keys once the 16-slot cap is reached so the
+    /// fixed-size GPU layout never overflows.
+    public func setUserUniform(name: String, rgba: SIMD4<Float>) {
+        if userUniforms[name] == nil, userUniforms.count >= maxUserUniforms {
+            return
+        }
+        userUniforms[name] = rgba
     }
 
     public func setMouse(_ point: CGPoint, clicked: Bool) {

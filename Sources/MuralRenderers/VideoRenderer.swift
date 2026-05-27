@@ -74,6 +74,31 @@ public final class VideoRenderer: WallpaperRenderer {
         if let px = maxPixels { player.currentItem?.preferredMaximumResolution = px }
     }
 
+    // MARK: - PropertiesSink
+
+    /// Phase 9 — apply a live property override. Recognised names: `playbackRate`,
+    /// `volume`, `scaleMode`. Unknown names are silently ignored. Lives on the
+    /// class (not a separate-file extension) because `player` is `private`.
+    public func apply(propertyName: String, value: WebBridgePropertyValue) {
+        switch propertyName {
+        case "playbackRate":
+            if case let .double(rate) = value {
+                player.rate = Float(rate)
+            }
+        case "volume":
+            if case let .double(level) = value {
+                player.volume = Float(level)
+                player.isMuted = level == 0
+            }
+        case "scaleMode":
+            if case let .string(raw) = value, let mode = ScaleMode(rawValue: raw) {
+                setScaleMode(mode)
+            }
+        default:
+            break
+        }
+    }
+
     // MARK: - Test seams
 
     #if DEBUG
@@ -88,3 +113,7 @@ public final class VideoRenderer: WallpaperRenderer {
         }
     #endif
 }
+
+// MARK: - PropertiesSink conformance
+
+extension VideoRenderer: PropertiesSink {}
