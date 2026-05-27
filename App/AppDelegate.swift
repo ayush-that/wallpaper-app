@@ -62,14 +62,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
 
-        // Attempt to enable audio reactivity at launch. The orchestrator's
-        // enableAudio() trusts SCStream's own permission error path rather than
-        // CGPreflightScreenCaptureAccess() (which checks the legacy TCC bucket
-        // and lies on macOS 15+). If permission is missing, SCStream raises and
-        // the orchestrator surfaces the TCC sheet.
-        if let orchestrator {
-            Task { await orchestrator.enableAudio() }
-        }
+        // Audio reactivity is opt-in. During Debug builds the binary's cdhash
+        // changes every rebuild, so any SCK call retriggers the Screen Recording
+        // TCC prompt — annoying and noisy. The Phase 11 Settings UI will surface
+        // a single toggle that calls `orchestrator?.enableAudio()` on demand;
+        // until then audio capture stays dormant. The audio pipeline remains
+        // wired so existing audio-reactive web wallpapers will Just Work the
+        // moment the user opts in.
     }
 
     func applicationWillTerminate(_: Notification) {
