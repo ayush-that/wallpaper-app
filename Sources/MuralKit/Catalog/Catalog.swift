@@ -53,3 +53,51 @@ public final class Catalog {
         }
     }
 }
+
+public extension Catalog {
+    func upsert(_ playlist: Playlist) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let data = try encoder.encode(playlist)
+        let json = String(data: data, encoding: .utf8) ?? "{}"
+        try dbq.write { db in
+            try db.execute(
+                sql: """
+                INSERT INTO playlist(id, name, json, enabled) VALUES(?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    name = excluded.name,
+                    json = excluded.json,
+                    enabled = excluded.enabled
+                """,
+                arguments: [
+                    playlist.id.uuidString,
+                    playlist.name,
+                    json,
+                    playlist.enabled
+                ]
+            )
+        }
+    }
+
+    func allPlaylists() throws -> [Playlist] {
+        try dbq.read { db in
+            let rows = try Row.fetchAll(
+                db,
+                sql: "SELECT json FROM playlist ORDER BY name"
+            )
+            return try rows.compactMap { row -> Playlist? in
+                guard let json: String = row["json"] else { return nil }
+                return try JSONDecoder().decode(Playlist.self, from: Data(json.utf8))
+            }
+        }
+    }
+
+    func deletePlaylist(id: UUID) throws {
+        _ = try dbq.write { db in
+            try db.execute(
+                sql: "DELETE FROM playlist WHERE id = ?",
+                arguments: [id.uuidString]
+            )
+        }
+    }
+}
