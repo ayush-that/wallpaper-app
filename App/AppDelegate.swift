@@ -39,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var observableSettings: ObservableSettings?
 
     private var controlSocket: ControlSocket?
+    private var updateManager: UpdateManager?
 
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -52,6 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.engine = engine
 
         setupLibrary()
+
+        updateManager = UpdateManager()
 
         observableSettings = ObservableSettings(store: settings)
 
@@ -160,6 +163,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             toggleUserPause()
         case .smokeTest:
             engine?.setRendererForAllDisplays(factory: { SolidColorRenderer(color: .magenta) })
+        case .checkForUpdates:
+            updateManager?.checkNow()
         case .quit:
             NSApp.terminate(nil)
         }

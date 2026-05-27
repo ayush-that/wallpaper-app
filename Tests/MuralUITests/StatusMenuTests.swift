@@ -40,10 +40,19 @@ final class StatusMenuTests: XCTestCase {
         XCTAssertEqual(item?.tag, StatusMenuAction.smokeTest.rawValue)
     }
 
+    func test_menu_contains_check_for_updates_item_with_correct_tag() {
+        let menu = buildMenu()
+        let item = menu.items.first(where: { $0.title == "Check for Updates…" })
+        XCTAssertNotNil(item)
+        XCTAssertEqual(item?.tag, StatusMenuAction.checkForUpdates.rawValue)
+        XCTAssertEqual(item?.keyEquivalent, "u")
+    }
+
     func test_menu_action_tags_are_unique() {
         let menu = buildMenu()
         let topLevelTitles: Set = [
-            "Library…", "Settings…", "Pause All", "Debug: Magenta Smoke Test", "Quit Mural"
+            "Library…", "Settings…", "Pause All", "Debug: Magenta Smoke Test",
+            "Check for Updates…", "Quit Mural"
         ]
         let tags = menu.items
             .filter { topLevelTitles.contains($0.title) }

@@ -5,6 +5,7 @@ public enum StatusMenuAction: Int {
     case settings
     case pauseAll
     case smokeTest
+    case checkForUpdates
     case quit
 }
 
@@ -51,6 +52,11 @@ public enum StatusMenu {
         addTopLevel(
             menu, target: target, action: action,
             title: "Debug: Magenta Smoke Test", tag: .smokeTest, key: ""
+        )
+
+        addTopLevel(
+            menu, target: target, action: action,
+            title: "Check for Updates…", tag: .checkForUpdates, key: "u"
         )
 
         menu.addItem(.separator())
