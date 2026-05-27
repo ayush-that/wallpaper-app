@@ -53,23 +53,31 @@ public final class WallpaperOrchestrator: ObservableObject {
         }
     }
 
-    /// Start system audio capture. Idempotent. Returns `false` if Screen
-    /// Recording TCC is not granted or the capture pipeline fails to start —
-    /// the UI catches `false` and surfaces the TCC onboarding sheet (Task 8).
+    /// Start system audio capture. Idempotent.
+    ///
+    /// We don't trust `CGPreflightScreenCaptureAccess()` — on macOS 15+ the
+    /// permission was renamed to "Screen & System Audio Recording" and lives
+    /// in a different TCC bucket than the legacy "Screen Recording" one the
+    /// preflight API checks. Always attempt `audio.start()`; SCStream's own
+    /// error path is authoritative. If start fails with what looks like a
+    /// permission error, post the TCC onboarding sheet notification.
     @discardableResult
     public func enableAudio() async -> Bool {
         guard !audioStarted else { return true }
-        guard SystemAudioCapture.preflight() == .granted else {
-            log.warning("Audio enable requested but Screen Recording TCC not granted.")
-            PermissionRequest.post(.screenRecording)
-            return false
-        }
         do {
             try await audio.start()
             audioStarted = true
+            log.info("AudioPipeline started.")
             return true
         } catch {
-            log.error("AudioPipeline start failed: \(error.localizedDescription, privacy: .public)")
+            let description = error.localizedDescription
+            log.error("AudioPipeline start failed: \(description, privacy: .public)")
+            let lower = description.lowercased()
+            if lower.contains("permission") || lower.contains("tcc") || lower.contains("declined")
+                || lower.contains("denied") || lower.contains("not authorized")
+            {
+                PermissionRequest.post(.screenRecording)
+            }
             return false
         }
     }

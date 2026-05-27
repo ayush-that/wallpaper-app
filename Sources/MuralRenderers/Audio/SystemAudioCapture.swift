@@ -23,6 +23,10 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
     private let queue = DispatchQueue(label: "app.mural.audio.capture")
     private var stream: SCStream?
 
+    /// Diagnostic counters — log every ~1s of audio frames so we can see if
+    /// SCStream is delivering buffers at all and what their levels look like.
+    private let diag = DiagnosticCounters()
+
     public init(ring: AudioRingBuffer) {
         self.ring = ring
         super.init()
@@ -53,15 +57,20 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
 
         let config = SCStreamConfiguration()
         config.capturesAudio = true
-        config.excludesCurrentProcessAudio = true
+        // NOTE: `excludesCurrentProcessAudio = true` was suppressing audio
+        // delivery entirely on macOS 26.5 in observed testing — leave it false
+        // until we revisit on a known-good macOS version.
+        config.excludesCurrentProcessAudio = false
         config.sampleRate = 48000
         config.channelCount = 2
         // SCK requires at least one visual output type even when we only care
-        // about audio; keep it cheap (32×32 @ 1 fps).
-        config.width = 32
-        config.height = 32
-        config.minimumFrameInterval = CMTime(value: 1, timescale: 1)
-        config.queueDepth = 4
+        // about audio. macOS 26.5 also rejected `minimumFrameInterval` of
+        // 1 fps in some experiments — bump to 30 fps to match Apple sample
+        // defaults; we still discard the video frames.
+        config.width = 64
+        config.height = 64
+        config.minimumFrameInterval = CMTime(value: 1, timescale: 30)
+        config.queueDepth = 6
 
         let stream = SCStream(filter: filter, configuration: config, delegate: self)
         try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: queue)
@@ -126,14 +135,34 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
         )
 
         var mono = [Float](repeating: 0, count: frameCount)
+        var absSum: Float = 0
+        var absMax: Float = 0
         for frameIndex in 0 ..< frameCount {
             var accumulator: Float = 0
             for channelIndex in 0 ..< channels {
                 accumulator += floats[frameIndex * channels + channelIndex]
             }
-            mono[frameIndex] = accumulator / Float(channels)
+            let value = accumulator / Float(channels)
+            mono[frameIndex] = value
+            let absValue = abs(value)
+            absSum += absValue
+            if absValue > absMax { absMax = absValue }
         }
         ring.write(mono)
+
+        // Periodic diagnostic. Logs roughly once per second of captured audio.
+        // Format hints describe the buffer layout SCK gave us so we can spot
+        // misinterpretation (planar vs interleaved, sample-rate mismatch, etc.).
+        diag.record(
+            frames: frameCount,
+            channels: channels,
+            absSum: absSum,
+            absMax: absMax,
+            mNumberBuffers: Int(audioBufferList.mNumberBuffers),
+            mNumberChannels: Int(firstBuffer.mNumberChannels),
+            asbd: asbd,
+            log: log
+        )
     }
 
     // MARK: - SCStreamDelegate
@@ -146,4 +175,49 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
 public enum SystemAudioCaptureError: Error, Equatable {
     case noDisplay
     case permissionDenied
+}
+
+/// Lock-protected rolling diagnostic. Emits an info log roughly once per second
+/// of captured audio so we can verify SCStream is actually delivering signal.
+private final class DiagnosticCounters: @unchecked Sendable {
+    private let lock = NSLock()
+    private var framesSinceLastLog = 0
+    private var absSumSinceLastLog: Double = 0
+    private var absMaxSinceLastLog: Float = 0
+    private var lastLogTime: TimeInterval = 0
+
+    func record(
+        frames: Int,
+        channels: Int,
+        absSum: Float,
+        absMax: Float,
+        mNumberBuffers: Int,
+        mNumberChannels: Int,
+        asbd: AudioStreamBasicDescription,
+        log: Logger
+    ) {
+        lock.lock()
+        framesSinceLastLog += frames
+        absSumSinceLastLog += Double(absSum)
+        if absMax > absMaxSinceLastLog { absMaxSinceLastLog = absMax }
+        let now = CACurrentMediaTime()
+        let shouldEmit = now - lastLogTime > 1.0 && framesSinceLastLog > 0
+        let snapshot: (Int, Double, Float, TimeInterval)? = shouldEmit
+            ? (framesSinceLastLog, absSumSinceLastLog, absMaxSinceLastLog, now - lastLogTime)
+            : nil
+        if shouldEmit {
+            framesSinceLastLog = 0
+            absSumSinceLastLog = 0
+            absMaxSinceLastLog = 0
+            lastLogTime = now
+        }
+        lock.unlock()
+
+        guard let (totalFrames, totalSum, peakMax, window) = snapshot else { return }
+        let average = totalSum / Double(max(totalFrames, 1))
+        log.info(
+            // swiftformat:disable next:wrap
+            "SCStream audio diag: window=\(window, format: .fixed(precision: 2))s frames=\(totalFrames) channels=\(channels) buffers=\(mNumberBuffers) bufCh=\(mNumberChannels) sr=\(asbd.mSampleRate) bitsPerCh=\(asbd.mBitsPerChannel) bytesPerFrame=\(asbd.mBytesPerFrame) formatID=\(asbd.mFormatID) flags=\(asbd.mFormatFlags) absMax=\(peakMax, format: .fixed(precision: 5)) absAvg=\(average, format: .fixed(precision: 6))"
+        )
+    }
 }

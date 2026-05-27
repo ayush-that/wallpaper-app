@@ -47,11 +47,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
 
-        // Auto-enable audio reactivity if Screen Recording permission is already granted.
-        // First-run users without permission see the TCC sheet (Phase 6 Task 8) when an
-        // audio-reactive wallpaper actually requests it. Settings UI in Phase 11 surfaces
-        // an explicit toggle.
-        if SystemAudioCapture.preflight() == .granted, let orchestrator {
+        // Attempt to enable audio reactivity at launch. The orchestrator's
+        // enableAudio() trusts SCStream's own permission error path rather than
+        // CGPreflightScreenCaptureAccess() (which checks the legacy TCC bucket
+        // and lies on macOS 15+). If permission is missing, SCStream raises and
+        // the orchestrator surfaces the TCC sheet.
+        if let orchestrator {
             Task { await orchestrator.enableAudio() }
         }
     }
