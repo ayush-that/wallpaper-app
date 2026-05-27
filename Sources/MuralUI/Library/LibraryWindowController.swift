@@ -20,8 +20,13 @@ public final class LibraryWindowController: NSObject {
         super.init()
     }
 
-    public func open(viewModel: LibraryViewModel?, orchestrator: WallpaperOrchestrator?) {
-        guard let viewModel, let orchestrator else {
+    public func open(
+        viewModel: LibraryViewModel?,
+        playlistsViewModel: PlaylistsViewModel?,
+        orchestrator: WallpaperOrchestrator?,
+        onPlaylistEnabledChange: @escaping (Playlist) -> Void = { _ in }
+    ) {
+        guard let viewModel, let playlistsViewModel, let orchestrator else {
             log.error("Library not available (catalog open failed at launch)")
             return
         }
@@ -31,13 +36,18 @@ public final class LibraryWindowController: NSObject {
             return
         }
 
-        let rootView = LibraryView(vm: viewModel) { wallpaper in
-            orchestrator.applyToAllDisplays(wallpaper: wallpaper)
-        }
+        let rootView = LibraryRootView(
+            libraryVM: viewModel,
+            playlistsVM: playlistsViewModel,
+            onUseAsWallpaper: { wallpaper in
+                orchestrator.applyToAllDisplays(wallpaper: wallpaper)
+            },
+            onPlaylistEnabledChange: onPlaylistEnabledChange
+        )
         let hosting = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hosting)
         window.title = "Mural Library"
-        window.setContentSize(NSSize(width: 880, height: 560))
+        window.setContentSize(NSSize(width: 1180, height: 600))
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.center()
         window.isReleasedWhenClosed = false

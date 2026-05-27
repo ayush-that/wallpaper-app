@@ -16,6 +16,13 @@ public final class WallpaperEngine {
     private let log = Log.logger("Engine")
     private let displayManager: DisplayManager
     private var current: [String: WallpaperRenderer] = [:] // keyed by Display.uuid
+    private var activeWallpaperIDs: [String: UUID] = [:] // keyed by Display.uuid
+
+    /// Optional library root used when persisting `ActiveStatus`. Wired by the
+    /// orchestrator from `LibraryService.libraryRoot` on construction. While
+    /// nil, `persistActive()` is a no-op so unit tests that don't care about
+    /// disk side effects can stand the engine up bare.
+    public var libraryRoot: URL?
 
     public init(displayManager: DisplayManager) {
         self.displayManager = displayManager
@@ -36,6 +43,20 @@ public final class WallpaperEngine {
         current[display.uuid] = renderer
     }
 
+    /// Variant that records the wallpaper ID for this display so the engine can
+    /// publish an `ActiveStatus` snapshot. The zero-ID overload above remains
+    /// for callers that don't have a wallpaper identity (test renderers, the
+    /// solid-colour fallback path).
+    public func setRenderer(
+        _ renderer: WallpaperRenderer,
+        for display: Display,
+        wallpaperID: UUID
+    ) {
+        setRenderer(renderer, for: display)
+        activeWallpaperIDs[display.uuid] = wallpaperID
+        persistActive()
+    }
+
     /// Apply a fresh renderer (produced by `factory`) to every display known to
     /// the `DisplayManager`. Any previously-attached renderers are detached first.
     public func setRendererForAllDisplays(factory: () -> WallpaperRenderer) {
@@ -50,10 +71,28 @@ public final class WallpaperEngine {
         }
     }
 
-    /// Detach and drop the renderer for `display`, if any.
+    /// Variant that records `wallpaperID` against every display the factory
+    /// applies to, then persists `ActiveStatus`.
+    public func setRendererForAllDisplays(
+        factory: () -> WallpaperRenderer,
+        wallpaperID: UUID
+    ) {
+        setRendererForAllDisplays(factory: factory)
+        for uuid in displayManager.hosts.keys {
+            activeWallpaperIDs[uuid] = wallpaperID
+        }
+        persistActive()
+    }
+
+    /// Detach and drop the renderer for `display`, if any. Also clears any
+    /// recorded wallpaper ID and re-persists `ActiveStatus` if the entry
+    /// actually existed.
     public func clear(for display: Display) {
         current[display.uuid]?.detach()
         current.removeValue(forKey: display.uuid)
+        if activeWallpaperIDs.removeValue(forKey: display.uuid) != nil {
+            persistActive()
+        }
     }
 
     /// Pause every active renderer. Safe to call repeatedly — renderers are
@@ -79,5 +118,23 @@ public final class WallpaperEngine {
     /// The set of display UUIDs that currently have an attached renderer.
     public var activeRendererUUIDs: [String] {
         Array(current.keys)
+    }
+
+    /// Write the current `(display, wallpaperID)` map to disk. Silently swallows
+    /// errors — losing one snapshot is preferable to crashing the renderer
+    /// pipeline; readers (screensaver bundle etc.) will pick up the next write.
+    private func persistActive() {
+        guard let libraryRoot else { return }
+        let snapshot = ActiveStatus(
+            displays: activeWallpaperIDs.map { uuid, wallpaperID in
+                ActiveStatus.PerDisplay(displayUUID: uuid, wallpaperID: wallpaperID)
+            },
+            libraryRoot: libraryRoot.path
+        )
+        do {
+            try ActiveStatus.write(snapshot)
+        } catch {
+            log.error("ActiveStatus write failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 }
