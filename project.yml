@@ -81,8 +81,9 @@ targets:
         CFBundleVersion: "1"
         NSHumanReadableCopyright: "© 2026"
         NSAppleEventsUsageDescription: "Mural detects foreground apps to pause wallpapers when needed."
-        SUFeedURL: "https://mural.app/appcast.xml"
         SUEnableAutomaticChecks: true
+        SUFeedURL: "https://ayush-that.github.io/wallpaper-app/appcast.xml"
+        SUPublicEDKey: ""
     entitlements:
       path: App/Mural.entitlements
       properties:
