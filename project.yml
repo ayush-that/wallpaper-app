@@ -101,6 +101,21 @@ targets:
       - package: ZIPFoundation
       - package: ArgumentParser
       - package: Logging
+  muralctl:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Tools/muralctl
+        createIntermediateGroups: true
+      - path: Sources/MuralKit/IPC/Command.swift
+      - path: Sources/MuralKit/IPC/Client.swift
+      - path: Sources/MuralRenderers/Web/WebBridgePropertyValue.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.mural.muralctl
+        PRODUCT_NAME: muralctl
+    dependencies:
+      - package: ArgumentParser
   MuralTests:
     type: bundle.unit-test
     platform: macOS
@@ -132,3 +147,9 @@ schemes:
     test:
       config: Debug
       targets: [MuralTests]
+  muralctl:
+    build:
+      targets:
+        muralctl: all
+    run:
+      config: Debug
