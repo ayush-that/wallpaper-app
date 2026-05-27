@@ -37,6 +37,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var playlistsViewModel: PlaylistsViewModel?
     private(set) var orchestrator: WallpaperOrchestrator?
 
+    private var controlSocket: ControlSocket?
+
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
@@ -64,6 +66,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         log.info("Mural launched (version \(Bundle.main.shortVersionString, privacy: .public))")
 
+        startControlSocket()
+
         // Audio reactivity is opt-in. During Debug builds the binary's cdhash
         // changes every rebuild, so any SCK call retriggers the Screen Recording
         // TCC prompt — annoying and noisy. The Phase 11 Settings UI will surface
@@ -74,6 +78,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_: Notification) {
+        controlSocket?.stop()
+        controlSocket = nil
         teardownPolicyWatchers()
         displayManager?.shutdown()
     }
@@ -156,8 +162,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func toggleUserPause() {
-        userPaused.toggle()
+    private func toggleUserPause(forceState: Bool? = nil) {
+        if let forceState {
+            guard forceState != userPaused else { return }
+            userPaused = forceState
+        } else {
+            userPaused.toggle()
+        }
         let coordinator = pauseCoordinator
         if let displayManager {
             for uuid in displayManager.windows.keys {
@@ -326,6 +337,115 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             orchestrator.startPlaylist(playlist)
         } else {
             orchestrator.stopPlaylist()
+        }
+    }
+
+    private func startControlSocket() {
+        let socket = ControlSocket { [weak self] command in
+            guard let self else { return CommandResponse.failure("Mural is shutting down") }
+            return await MainActor.run {
+                self.dispatch(command)
+            }
+        }
+        do {
+            try socket.start()
+            controlSocket = socket
+            log.info("ControlSocket ready at \(ControlSocket.defaultPath, privacy: .public)")
+        } catch {
+            log.error("ControlSocket failed to start: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func dispatch(_ command: Command) -> CommandResponse {
+        switch command {
+        case let .set(wallpaperID, displayUUID):
+            return handleSet(wallpaperID: wallpaperID, displayUUID: displayUUID)
+        case let .close(displayUUID):
+            return handleClose(displayUUID: displayUUID)
+        case .pause:
+            toggleUserPause(forceState: true)
+            return .success("paused")
+        case .resume:
+            toggleUserPause(forceState: false)
+            return .success("resumed")
+        case let .setProperty(wallpaperID, displayUUID, name, value):
+            return handleSetProperty(
+                wallpaperID: wallpaperID,
+                displayUUID: displayUUID,
+                name: name,
+                value: value
+            )
+        case let .importFile(path):
+            return handleImport(path: path)
+        case .status:
+            return handleStatus()
+        }
+    }
+
+    private func handleSet(wallpaperID: UUID, displayUUID _: String?) -> CommandResponse {
+        guard let library = libraryService, let orchestrator else {
+            return .failure("library not ready")
+        }
+        do {
+            guard let wallpaper = try library.catalog.fetch(id: wallpaperID) else {
+                return .failure("no wallpaper with id \(wallpaperID.uuidString)")
+            }
+            // Per-display setting is a future polish; v1 applies to every display.
+            orchestrator.applyToAllDisplays(wallpaper: wallpaper)
+            return .success("set \(wallpaper.title)")
+        } catch {
+            return .failure(error.localizedDescription)
+        }
+    }
+
+    private func handleClose(displayUUID _: String?) -> CommandResponse {
+        guard let engine else { return .failure("engine not ready") }
+        // Per-display close is future polish. v1 clears every display by
+        // swapping in a transparent SolidColorRenderer.
+        engine.setRendererForAllDisplays(factory: { SolidColorRenderer(color: .clear) })
+        return .success("closed")
+    }
+
+    private func handleSetProperty(
+        wallpaperID: UUID,
+        displayUUID _: String?,
+        name: String,
+        value: WebBridgePropertyValue
+    ) -> CommandResponse {
+        guard let orchestrator else { return .failure("not ready") }
+        // Apply live to every renderer. Persistence happens via the SwiftUI panel;
+        // CLI setprop is fire-and-forget for v1.
+        let sinks = orchestrator.activePropertySinks()
+        guard !sinks.isEmpty else { return .failure("no active renderers") }
+        let fanOut = FanOutPropertiesSink(sinks)
+        fanOut.apply(propertyName: name, value: value)
+        return .success("set \(name) on \(wallpaperID.uuidString.prefix(8))")
+    }
+
+    private func handleImport(path: String) -> CommandResponse {
+        guard let library = libraryService else { return .failure("library not ready") }
+        let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+        do {
+            let wallpaper = try library.importFile(at: url)
+            return .success("imported \(wallpaper.title) (\(wallpaper.id.uuidString))")
+        } catch {
+            return .failure(error.localizedDescription)
+        }
+    }
+
+    private func handleStatus() -> CommandResponse {
+        do {
+            guard let status = try ActiveStatus.read() else {
+                return .success(statusJSON: "{\"displays\":[],\"libraryRoot\":\"\"}")
+            }
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(status)
+            let json = String(data: data, encoding: .utf8) ?? "{}"
+            return .success(statusJSON: json)
+        } catch {
+            return .failure(error.localizedDescription)
         }
     }
 
