@@ -13,11 +13,22 @@ import OSLog
 /// when audio is off the broadcaster simply never publishes, so the
 /// subscriptions cost nothing. The UI calls `enableAudio()` once the user
 /// opts in (and grants Screen Recording TCC).
+///
+/// Owns a `PlaylistScheduler` too. UI calls `startPlaylist(_:)` to begin
+/// rotation; the scheduler invokes our private `applyByID(_:)` on each tick
+/// which fetches the wallpaper from the catalog and routes through the same
+/// `applyToAllDisplays` path used by manual picks.
 @MainActor
 public final class WallpaperOrchestrator: ObservableObject {
     private let log = Log.logger("Orchestrator")
     private let engine: WallpaperEngine
     private let library: LibraryService
+    /// The scheduler closes over `self`, so we can't construct it inline with
+    /// the other stored properties. Built lazily on first playlist start. Once
+    /// assigned it lives for the orchestrator's lifetime.
+    private lazy var scheduler: PlaylistScheduler = .init { [weak self] wallpaperID in
+        self?.applyByID(wallpaperID)
+    }
 
     public let audio = AudioPipeline()
     private var audioStarted = false
@@ -27,29 +38,60 @@ public final class WallpaperOrchestrator: ObservableObject {
     public init(engine: WallpaperEngine, library: LibraryService) {
         self.engine = engine
         self.library = library
+        // Wire the library root into the engine so `ActiveStatus` snapshots
+        // carry the right path for cross-process readers (screensaver bundle).
+        engine.libraryRoot = library.libraryRoot
     }
 
     public func applyToAllDisplays(wallpaper: Wallpaper) {
         let package = library.package(for: wallpaper.id)
         let mode = scaleMode
         let broadcaster = audio.broadcaster
-        engine.setRendererForAllDisplays { [log] in
-            do {
-                let renderer = try RendererFactory.makeRenderer(
-                    for: wallpaper,
-                    package: package,
-                    scaleMode: mode
-                )
-                if let webRenderer = renderer as? WebRenderer {
-                    webRenderer.attachAudio(broadcaster)
+        let wallpaperID = wallpaper.id
+        engine.setRendererForAllDisplays(
+            factory: { [log] in
+                do {
+                    let renderer = try RendererFactory.makeRenderer(
+                        for: wallpaper,
+                        package: package,
+                        scaleMode: mode
+                    )
+                    if let webRenderer = renderer as? WebRenderer {
+                        webRenderer.attachAudio(broadcaster)
+                    }
+                    return renderer
+                } catch {
+                    log.error(
+                        "RendererFactory failed for \(wallpaper.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                    )
+                    return SolidColorRenderer(color: .systemRed)
                 }
-                return renderer
-            } catch {
-                log.error(
-                    "RendererFactory failed for \(wallpaper.id.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)"
-                )
-                return SolidColorRenderer(color: .systemRed)
+            },
+            wallpaperID: wallpaperID
+        )
+    }
+
+    /// Begin (or replace) the active playlist. Each scheduler tick fetches the
+    /// picked wallpaper from the catalog and applies it to every display.
+    public func startPlaylist(_ playlist: Playlist) {
+        scheduler.start(playlist: playlist)
+    }
+
+    /// Halt scheduled rotation. The currently-rendering wallpaper stays put;
+    /// stopping the playlist does not clear displays.
+    public func stopPlaylist() {
+        scheduler.stop()
+    }
+
+    private func applyByID(_ wallpaperID: UUID) {
+        do {
+            guard let wallpaper = try library.catalog.fetch(id: wallpaperID) else {
+                log.warning("Playlist picked unknown wallpaper \(wallpaperID.uuidString, privacy: .public)")
+                return
             }
+            applyToAllDisplays(wallpaper: wallpaper)
+        } catch {
+            log.error("Playlist pick fetch failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
