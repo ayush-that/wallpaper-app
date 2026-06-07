@@ -2,9 +2,11 @@ import SwiftUI
 
 public struct GeneralPane: View {
     @ObservedObject public var settings: ObservableSettings
+    @ObservedObject public var updateManager: UpdateManager
 
-    public init(settings: ObservableSettings) {
+    public init(settings: ObservableSettings, updateManager: UpdateManager) {
         self.settings = settings
+        self.updateManager = updateManager
     }
 
     public var body: some View {
@@ -19,6 +21,10 @@ public struct GeneralPane: View {
             }
             Section("Audio") {
                 Toggle("Mute wallpaper audio", isOn: $settings.muteWallpaperAudio)
+            }
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: $updateManager.automaticallyChecksForUpdates)
+                Button("Check Now…") { updateManager.checkNow() }
             }
         }
         .formStyle(.grouped)

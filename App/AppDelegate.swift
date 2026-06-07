@@ -39,7 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private(set) var observableSettings: ObservableSettings?
 
     private var controlSocket: ControlSocket?
-    private var updateManager: UpdateManager?
+    private(set) var updateManager: UpdateManager?
 
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)

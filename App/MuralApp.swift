@@ -11,14 +11,15 @@ struct MuralApp: App {
     }
 }
 
-/// Bridges AppDelegate's `ObservableSettings?` into the SwiftUI scene.
-/// When AppDelegate hasn't fully initialised yet (rare — only during the
-/// very first frame), shows a placeholder.
+/// Bridges AppDelegate's `ObservableSettings?` and `UpdateManager?` into the
+/// SwiftUI scene. When AppDelegate hasn't fully initialised yet (rare — only
+/// during the very first frame), shows a placeholder.
 private struct SettingsRoot: View {
     let appDelegate: AppDelegate
     var body: some View {
-        if let settings = appDelegate.observableSettings {
-            SettingsRootView(settings: settings)
+        if let settings = appDelegate.observableSettings,
+           let updateManager = appDelegate.updateManager {
+            SettingsRootView(settings: settings, updateManager: updateManager)
         } else {
             Text("Loading settings…").padding()
         }
