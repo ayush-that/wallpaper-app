@@ -74,7 +74,7 @@ targets:
       properties:
         LSUIElement: true
         LSMinimumSystemVersion: "14.0"
-        CFBundleShortVersionString: "0.1.0"
+        CFBundleShortVersionString: "1.0.0"
         CFBundleURLTypes:
           - CFBundleURLName: app.mural.Mural
             CFBundleURLSchemes: [mural]
@@ -83,7 +83,7 @@ targets:
         NSAppleEventsUsageDescription: "Mural detects foreground apps to pause wallpapers when needed."
         SUEnableAutomaticChecks: true
         SUFeedURL: "https://ayush-that.github.io/wallpaper-app/appcast.xml"
-        SUPublicEDKey: ""
+        SUPublicEDKey: "RwhQabNp259yARQF8pc7nTJuLqyfoHxvaM5w/4v8JRQ="
     entitlements:
       path: App/Mural.entitlements
       properties:
