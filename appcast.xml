@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Mural</title>
+        <item>
+            <title>1.0.0</title>
+            <pubDate>Sun, 07 Jun 2026 14:50:48 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://ayush-that.github.io/wallpaper-app/Mural-1.0.0.dmg" length="6426429" type="application/octet-stream" sparkle:edSignature="syBaPmci9pxRM9qMo1MYLGH25aJE/PYkMhHVzfGv1AtRnw/8vvITrzWYbMU/ulhab/ZowZteWENiD/ywVEbfDw=="/>
+        </item>
+    </channel>
+</rss>
