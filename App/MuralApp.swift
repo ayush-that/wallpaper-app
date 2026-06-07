@@ -18,7 +18,8 @@ private struct SettingsRoot: View {
     let appDelegate: AppDelegate
     var body: some View {
         if let settings = appDelegate.observableSettings,
-           let updateManager = appDelegate.updateManager {
+           let updateManager = appDelegate.updateManager
+        {
             SettingsRootView(settings: settings, updateManager: updateManager)
         } else {
             Text("Loading settings…").padding()
