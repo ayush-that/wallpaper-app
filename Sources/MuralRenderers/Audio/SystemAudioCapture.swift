@@ -3,7 +3,7 @@ import CoreGraphics
 import CoreMedia
 import Foundation
 import OSLog
-import ScreenCaptureKit
+@preconcurrency import ScreenCaptureKit
 
 /// Captures system-mix audio via `ScreenCaptureKit`'s `SCStream`. Buffers are
 /// copied out of the SCK callback into an owned `[Float]` and handed to the
