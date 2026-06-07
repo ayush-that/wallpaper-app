@@ -26,11 +26,20 @@ if [ -z "${SPARKLE_ED_PRIVATE_KEY:-}" ]; then
   exit 64
 fi
 
-GEN_APPCAST="$(find "$HOME/Library/Developer/Xcode/DerivedData" \
-  -type f -name generate_appcast \
-  2>/dev/null | head -1 || true)"
+GEN_APPCAST=""
+for ROOT in \
+  "./build" \
+  "$HOME/Library/Developer/Xcode/DerivedData"
+do
+  [ -d "$ROOT" ] || continue
+  FOUND="$(find "$ROOT" -type f -name generate_appcast 2>/dev/null | head -1)"
+  if [ -n "$FOUND" ]; then
+    GEN_APPCAST="$FOUND"
+    break
+  fi
+done
 if [ -z "$GEN_APPCAST" ]; then
-  echo "fatal: generate_appcast not found in DerivedData." >&2
+  echo "fatal: generate_appcast not found in ./build or DerivedData." >&2
   echo "       Build the Mural scheme at least once so SPM materialises Sparkle." >&2
   exit 69
 fi
