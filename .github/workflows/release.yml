@@ -108,3 +108,40 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist/appcast
           keep_files: true
+
+      - name: Sync cask to ayush-that/homebrew-mural tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HOMEBREW_TAP_TOKEN:-}" ]; then
+            echo "HOMEBREW_TAP_TOKEN not set — skipping tap sync. Add the secret to enable."
+            exit 0
+          fi
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG="dist/Mural-${VERSION}.dmg"
+          if [ ! -f "$DMG" ]; then
+            echo "fatal: $DMG not found — release build skipped DMG step?" >&2
+            exit 1
+          fi
+          SHA="$(shasum -a 256 "$DMG" | awk '{print $1}')"
+
+          TAP_DIR="$(mktemp -d)"
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/ayush-that/homebrew-mural.git" "$TAP_DIR"
+          CASK="$TAP_DIR/Casks/mural.rb"
+
+          sed -i.bak -E "s|^  version \".*\"|  version \"${VERSION}\"|" "$CASK"
+          sed -i.bak -E "s|^  sha256 \".*\"|  sha256 \"${SHA}\"|" "$CASK"
+          rm -f "${CASK}.bak"
+
+          cd "$TAP_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet Casks/mural.rb; then
+            echo "Cask already at version ${VERSION}, nothing to push."
+            exit 0
+          fi
+          git add Casks/mural.rb
+          git commit -m "feat(mural): bump to ${VERSION}"
+          git push origin main
