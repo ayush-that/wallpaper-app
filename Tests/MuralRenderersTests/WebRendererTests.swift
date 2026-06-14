@@ -28,21 +28,21 @@ final class WebRendererTests: XCTestCase {
     func test_console_message_round_trips_from_js_to_native() throws {
         let url = try fixtureURL()
         let renderer = WebRenderer(entryURL: url, packageRoot: url.deletingLastPathComponent())
-        var captured: [WebBridgeMessage] = []
-        renderer.onBridgeMessage = { captured.append($0) }
+
+        // Fulfill as soon as the expected message arrives rather than sampling
+        // once after a fixed delay: a headless WebView in CI can take longer
+        // than a couple of seconds to load the page and round-trip the console
+        // call, which made the fixed-delay version flaky.
+        let expectation = expectation(description: "console message arrives")
+        expectation.assertForOverFulfill = false
+        renderer.onBridgeMessage = { message in
+            if case let .console(_, text) = message, text.contains("hello from web wallpaper") {
+                expectation.fulfill()
+            }
+        }
         renderer.attach(to: makeHost())
 
-        let expectation = expectation(description: "console message arrives")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            let consoleHits = captured.compactMap { message -> String? in
-                if case let .console(_, text) = message { return text }
-                return nil
-            }
-            let matched = consoleHits.contains(where: { $0.contains("hello from web wallpaper") })
-            XCTAssertTrue(matched, "expected to receive 'hello from web wallpaper' console message; got \(consoleHits)")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 5.0)
+        wait(for: [expectation], timeout: 15.0)
     }
 
     func test_set_property_invokes_livelyPropertyListener() throws {
