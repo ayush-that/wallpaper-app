@@ -46,18 +46,35 @@ public final class LibraryWindowController: NSObject {
             onPlaylistEnabledChange: onPlaylistEnabledChange,
             makePropertiesVM: makePropertiesVM
         )
-        let hosting = NSHostingController(rootView: rootView)
-        let window = NSWindow(contentViewController: hosting)
-        window.title = "Mural Library"
-        window.setContentSize(NSSize(width: 1180, height: 600))
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.center()
-        window.isReleasedWhenClosed = false
+        let window = Self.makeWindow(rootView: rootView)
         window.delegate = self
         self.window = window
 
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// The smallest content size at which both panes stay usable: the grid keeps
+    /// a full column and the right pane shows its header controls without
+    /// clipping. Matches the sum of the pane minimums in `LibraryRootView`
+    /// (left 480 + right 320 + the split divider) so nothing is truncated at the
+    /// floor. Without this the resizable window has no minimum and can be dragged
+    /// down until the content clips.
+    static let minimumContentSize = NSSize(width: 820, height: 520)
+
+    /// Builds and configures the library window without presenting it. Factored
+    /// out so the window chrome (minimum size, resize behaviour) is testable
+    /// without the side effects of activating the app.
+    static func makeWindow(rootView: some View) -> NSWindow {
+        let hosting = NSHostingController(rootView: rootView)
+        let window = NSWindow(contentViewController: hosting)
+        window.title = "Mural Library"
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.contentMinSize = minimumContentSize
+        window.setContentSize(NSSize(width: 1180, height: 600))
+        window.center()
+        window.isReleasedWhenClosed = false
+        return window
     }
 }
 

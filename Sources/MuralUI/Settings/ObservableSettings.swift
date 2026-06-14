@@ -33,6 +33,25 @@ public final class ObservableSettings: ObservableObject {
         didSet { store.set(.muteWallpaperAudio, muteWallpaperAudio) }
     }
 
+    /// Whether system-audio capture is currently running for audio-reactive
+    /// wallpapers. Intentionally session state, not persisted: starting capture
+    /// hits a TCC-gated ScreenCaptureKit API that, in Debug builds, re-prompts
+    /// for Screen Recording on every rebuild (the cdhash changes), so we never
+    /// auto-start at launch. It defaults to off each session and the user opts
+    /// in via the Settings toggle, which drives `onAudioReactiveChange`.
+    @Published public var audioReactive: Bool = false {
+        didSet {
+            guard audioReactive != oldValue else { return }
+            onAudioReactiveChange(audioReactive)
+        }
+    }
+
+    /// Invoked when `audioReactive` flips. `AppDelegate` wires this to the
+    /// orchestrator's `enableAudio()` / `disableAudio()`. The callback may set
+    /// `audioReactive` back to `false` if capture fails to start (e.g. the
+    /// Screen Recording permission was declined) so the toggle reflects reality.
+    public var onAudioReactiveChange: (Bool) -> Void = { _ in }
+
     /// `propagateToLoginItem` exists so tests can opt out of the real
     /// `SMAppService.register()` side effect that would otherwise install the
     /// test runner as a login item. Production code uses the default `true`.

@@ -35,7 +35,6 @@ public struct LibraryView: View {
                 .padding(16)
             }
         }
-        .frame(minWidth: 720, minHeight: 480)
         .onDrop(of: [.fileURL], isTargeted: nil, perform: handleDrop)
         .alert(
             "Import failed",
