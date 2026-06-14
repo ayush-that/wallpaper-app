@@ -3,7 +3,7 @@ import OSLog
 
 /// Tracks the set of active pause reasons per display and drives
 /// `renderer.pause()/resume()` on edge transitions. The coordinator does NOT
-/// know which renderer belongs to which display — `lookup` is injected by the
+/// know which renderer belongs to which display - `lookup` is injected by the
 /// owner (AppDelegate hands it a `WallpaperEngine.renderer(for:)` closure).
 ///
 /// All mutation goes through `add` / `remove` / `clear`. Reading is via
@@ -22,7 +22,7 @@ public final class PauseCoordinator: @unchecked Sendable {
     }
 
     /// Adds a reason for the given display. If the display had no reasons
-    /// before this call, the renderer's `pause()` is invoked. Idempotent —
+    /// before this call, the renderer's `pause()` is invoked. Idempotent:
     /// adding the same reason again is a no-op.
     public func add(_ reason: PauseReason, for displayUUID: String) {
         let transitionedToPaused: Bool = state.withLock { table in
@@ -64,7 +64,7 @@ public final class PauseCoordinator: @unchecked Sendable {
         state.withLock { $0[displayUUID] ?? [] }
     }
 
-    /// Clears all pause reasons for a display — e.g. on hot-unplug, when we
+    /// Clears all pause reasons for a display, e.g. on hot-unplug, when we
     /// no longer track that display.
     public func clear(displayUUID: String) {
         let transitioned: Bool = state.withLock { table in

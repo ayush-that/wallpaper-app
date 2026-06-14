@@ -118,7 +118,7 @@ final class VideoRendererTests: XCTestCase {
             XCTAssertGreaterThan(
                 layer.player?.rate ?? 0,
                 0,
-                "VP9 didn't start playing — check macOS / AVFoundation VP9 support"
+                "VP9 didn't start playing - check macOS / AVFoundation VP9 support"
             )
             expectation.fulfill()
         }

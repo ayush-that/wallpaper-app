@@ -12,7 +12,7 @@ final class FullscreenWatcherTests: XCTestCase {
 
     func test_scan_with_no_windows_returns_empty() {
         // We can't easily inject window-info into CGWindowList in a unit test,
-        // but with NO displays at all, the function returns early — covered above.
+        // but with NO displays at all, the function returns early (covered above).
         // This test verifies the function executes against the live system without
         // crashing for whatever real displays the test runner has.
         let displays: [String: NSScreen] = [:]

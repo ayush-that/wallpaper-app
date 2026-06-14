@@ -55,7 +55,7 @@ public final class PropertiesViewModel: ObservableObject {
         scheduleDebouncedWrite()
     }
 
-    /// Convenience for SwiftUI bindings — read with a fallback when the key is
+    /// Convenience for SwiftUI bindings - read with a fallback when the key is
     /// somehow missing (shouldn't happen post-init but defensive).
     public func value(for name: String, fallback: WebBridgePropertyValue) -> WebBridgePropertyValue {
         values[name] ?? fallback

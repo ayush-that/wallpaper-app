@@ -3,7 +3,7 @@ import AppKit
 /// Renders a static image as a wallpaper. Backed by a single `CALayer` whose
 /// `contents` is a `CGImage`. `ScaleMode` maps to `contentsGravity`; there is
 /// no animation, so `pause` and `resume` are no-ops. If the image fails to
-/// decode, the layer is still attached but `contents` is `nil` — visible as a
+/// decode, the layer is still attached but `contents` is `nil`, visible as a
 /// transparent square rather than a crash.
 @MainActor
 public final class ImageRenderer: WallpaperRenderer {
@@ -32,11 +32,11 @@ public final class ImageRenderer: WallpaperRenderer {
     }
 
     public func pause() {
-        // Static content — nothing to pause.
+        // Static content, nothing to pause.
     }
 
     public func resume() {
-        // Static content — nothing to resume.
+        // Static content, nothing to resume.
     }
 
     public func setScaleMode(_ mode: ScaleMode) {

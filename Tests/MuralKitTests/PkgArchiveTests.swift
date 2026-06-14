@@ -6,7 +6,7 @@ final class PkgArchiveTests: XCTestCase {
     private func fixtureURL() throws -> URL {
         try XCTUnwrap(
             Bundle(for: type(of: self)).url(forResource: "sample", withExtension: "pkg", subdirectory: "Fixtures"),
-            "missing Tests/Fixtures/sample.pkg — run Tests/FixtureSources/make-pkg.swift"
+            "missing Tests/Fixtures/sample.pkg - run Tests/FixtureSources/make-pkg.swift"
         )
     }
 

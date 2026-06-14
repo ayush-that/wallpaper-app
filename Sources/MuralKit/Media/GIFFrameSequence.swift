@@ -8,7 +8,7 @@ public enum GIFFrameSequenceError: Error, Equatable {
 }
 
 /// Decodes an animated GIF into an ordered list of CGImage frames with
-/// per-frame delays. Pure data — no rendering. `GIFRenderer` (Phase 6 Task 2)
+/// per-frame delays. Pure data, no rendering. `GIFRenderer` (Phase 6 Task 2)
 /// consumes this and drives frame swaps on a CVDisplayLink.
 public struct GIFFrameSequence: Sendable {
     public struct Frame: Sendable {

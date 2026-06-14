@@ -27,7 +27,7 @@ final class SystemAudioCaptureTests: XCTestCase {
     func test_start_when_permission_denied_throws_or_no_ops() async {
         // If permission isn't granted on this machine, start() will throw at
         // some point in the SCK setup (either no shareable content or a TCC
-        // rejection). We accept either outcome — the assertion is just "no crash".
+        // rejection). We accept either outcome; the assertion is just "no crash".
         let ring = AudioRingBuffer(capacity: 4096)
         let capture = SystemAudioCapture(ring: ring)
         do {

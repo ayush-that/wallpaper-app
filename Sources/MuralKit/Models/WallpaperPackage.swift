@@ -41,7 +41,7 @@ public struct WallpaperPackage: Sendable {
     }
 
     /// Returns the URL of the entry asset (resolved against `root` using
-    /// `Wallpaper.entryRelativePath`). Reads metadata each call — callers that
+    /// `Wallpaper.entryRelativePath`). Reads metadata each call; callers that
     /// hot-loop should cache.
     public func entryURL() throws -> URL {
         let metadata = try readMetadata()

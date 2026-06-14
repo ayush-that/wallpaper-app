@@ -72,7 +72,7 @@ final class PlaylistSchedulerTests: XCTestCase {
             wallpaperIDs: ids,
             strategy: .shuffle(seconds: 0.05)
         ))
-        try await Task.sleep(nanoseconds: 400_000_000) // ~8 ticks — at least one full cycle
+        try await Task.sleep(nanoseconds: 400_000_000) // ~8 ticks, at least one full cycle
         scheduler.stop()
         XCTAssertEqual(seen.get(), Set(ids), "shuffle must eventually visit every wallpaper")
     }

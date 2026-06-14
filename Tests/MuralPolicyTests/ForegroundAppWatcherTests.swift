@@ -10,7 +10,7 @@ final class ForegroundAppWatcherTests: XCTestCase {
         watcher.start { _ in
             captured.set(true)
         }
-        // Synchronous initial fire — no async hop.
+        // Synchronous initial fire, no async hop.
         XCTAssertTrue(captured.get(), "start() must fire onChange synchronously with current frontmost bundleID")
     }
 

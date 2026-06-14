@@ -57,7 +57,7 @@ public final class PropertyOverrideStore {
         }
     }
 
-    /// Atomic write — readers either see the previous content or the new
+    /// Atomic write: readers either see the previous content or the new
     /// content, never a partial JSON document.
     public func write(
         _ overrides: Overrides,

@@ -4,8 +4,8 @@ import OSLog
 /// `FFTAnalyzer`'s instance state is effectively immutable after `init`: the
 /// Hann `window` and `fftSetup` pointer are set once and never mutated;
 /// `analyze(...)` only touches local stack copies. That makes it safe to share
-/// across queues. We scope this `@unchecked Sendable` conformance here — where
-/// the cross-queue capture happens — rather than in `FFTAnalyzer.swift`.
+/// across queues. We scope this `@unchecked Sendable` conformance here (where
+/// the cross-queue capture happens) rather than in `FFTAnalyzer.swift`.
 extension FFTAnalyzer: @unchecked Sendable {}
 
 /// Orchestrates system audio capture into FFT bins broadcast at ~60 Hz.

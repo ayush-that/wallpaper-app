@@ -6,7 +6,7 @@ import ServiceManagement
 /// Wraps `SMAppService.mainApp` so the rest of the app interacts with a small,
 /// testable surface. `SMAppService` is macOS 13+ and replaces the deprecated
 /// `SMLoginItemSetEnabled` flow. The first `setEnabled(true)` may require the
-/// user to approve the helper in System Settings -> Login Items — there's no
+/// user to approve the helper in System Settings -> Login Items; there's no
 /// programmatic grant, only a deep-link.
 @MainActor
 public final class LoginItemController {

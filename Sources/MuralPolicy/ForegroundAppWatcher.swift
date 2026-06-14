@@ -6,7 +6,7 @@ import OSLog
 /// on every `NSWorkspace.didActivateApplicationNotification`.
 ///
 /// `bundleID` is the new frontmost app's bundle identifier, or nil if the
-/// foreground app has no bundle ID (rare — e.g. some shell helpers).
+/// foreground app has no bundle ID (rare, e.g. some shell helpers).
 @MainActor
 public final class ForegroundAppWatcher {
     public typealias Callback = @Sendable @MainActor (_ bundleID: String?) -> Void

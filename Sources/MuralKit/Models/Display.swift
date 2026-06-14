@@ -8,7 +8,7 @@ public struct Display: Equatable, Hashable, Sendable {
     public let uuid: String
     public let cgID: UInt32 // CGDirectDisplayID at snapshot time
     /// Display bounds at snapshot time. Stale after `didChangeScreenParameters`
-    /// — re-look up via `Display(screen:)` rather than caching.
+    /// re-look up via `Display(screen:)` rather than caching.
     public let bounds: CGRect
 
     public init?(screen: NSScreen) {

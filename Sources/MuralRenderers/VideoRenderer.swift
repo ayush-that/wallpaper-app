@@ -4,7 +4,7 @@ import OSLog
 
 /// Plays a video asset as a wallpaper: muted, hardware-decoded, seamlessly
 /// looped via `AVPlayerLooper`. The looper is retained for the lifetime of
-/// the renderer — dropping it kills the loop silently. Audio is suppressed
+/// the renderer (dropping it kills the loop silently). Audio is suppressed
 /// at two layers (`isMuted = true` and `audioMix = nil`) to prevent the
 /// audio HAL from being spun up, which is a real battery drain on idle
 /// wallpapers.
@@ -15,7 +15,7 @@ public final class VideoRenderer: WallpaperRenderer {
     private var scaleMode: ScaleMode
 
     private let player: AVQueuePlayer
-    private let looper: AVPlayerLooper // MUST be retained — drop and loop dies silently
+    private let looper: AVPlayerLooper // MUST be retained; drop and loop dies silently
     private let playerLayer: AVPlayerLayer
     private weak var host: WallpaperHost?
 
@@ -68,7 +68,7 @@ public final class VideoRenderer: WallpaperRenderer {
         playerLayer.videoGravity = mode.videoGravity
     }
 
-    /// Phase 7 hook — clamp bitrate / resolution under thermal pressure.
+    /// Phase 7 hook: clamp bitrate / resolution under thermal pressure.
     public func setPreferredCeiling(bitrateBPS: Double?, maxPixels: CGSize?) {
         if let bps = bitrateBPS { player.currentItem?.preferredPeakBitRate = bps }
         if let px = maxPixels { player.currentItem?.preferredMaximumResolution = px }
@@ -76,7 +76,7 @@ public final class VideoRenderer: WallpaperRenderer {
 
     // MARK: - PropertiesSink
 
-    /// Phase 9 — apply a live property override. Recognised names: `playbackRate`,
+    /// Phase 9: apply a live property override. Recognised names: `playbackRate`,
     /// `volume`, `scaleMode`. Unknown names are silently ignored. Lives on the
     /// class (not a separate-file extension) because `player` is `private`.
     public func apply(propertyName: String, value: WebBridgePropertyValue) {

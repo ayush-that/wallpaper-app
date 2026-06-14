@@ -22,7 +22,7 @@ tag, watch CI.
 
 5. Create an **app-specific password** at appleid.apple.com → Security →
    App-Specific Passwords. Label it "Mural notarytool". This is what
-   `notarytool` will authenticate with — NOT your iCloud password.
+   `notarytool` will authenticate with, NOT your iCloud password.
 
 ## GitHub secrets
 
@@ -76,7 +76,7 @@ match the new GH Pages URL.
 
 Defer until v1.1. If you want crash telemetry: create a Sentry project, copy
 the DSN to a new `SENTRY_DSN` GitHub secret, and inject it into Info.plist via
-an xcconfig substitution. (Not yet wired — leave alone for v1.0.)
+an xcconfig substitution. (Not yet wired, leave alone for v1.0.)
 
 ## Cutting a release
 
@@ -117,7 +117,7 @@ curl -s https://ayush-that.github.io/wallpaper-app/appcast.xml | xmllint --forma
 
 With Developer ID signing, the binary's cdhash is **stable across rebuilds**
 (it's a hash of the signed content, not the build hash). That kills the
-TCC re-prompt loop we hit in Debug builds — users grant permission once and
+TCC re-prompt loop we hit in Debug builds, users grant permission once and
 it sticks across updates.
 
 Until that day comes, Debug builds keep the audio/fullscreen-watcher opt-ins

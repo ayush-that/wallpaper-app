@@ -40,7 +40,7 @@ public final class UpdateManager: NSObject, ObservableObject {
             userDriverDelegate: nil
         )
         super.init()
-        // Policy: never silently install — always prompt.
+        // Policy: never silently install, always prompt.
         updater.automaticallyDownloadsUpdates = false
         let feed = updater.feedURL?.absoluteString ?? "nil"
         log.info("Sparkle initialised (feedURL=\(feed, privacy: .public))")

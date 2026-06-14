@@ -16,7 +16,7 @@ final class AudioPipelineTests: XCTestCase {
             captured.set(bins)
         }
         pipeline.publishForTests(bins: [0.5, 0.5])
-        // `publish` is synchronous — no timer or queue hop here.
+        // `publish` is synchronous, no timer or queue hop here.
         XCTAssertEqual(captured.get(), [0.5, 0.5])
     }
 
@@ -26,7 +26,7 @@ final class AudioPipelineTests: XCTestCase {
     }
 
     func test_start_when_permission_denied_throws_or_no_ops() async {
-        // Same shape as SystemAudioCaptureTests — TCC dependent; accept either
+        // Same shape as SystemAudioCaptureTests; TCC dependent; accept either
         // outcome. The assertion is just "no crash".
         let pipeline = AudioPipeline()
         do {

@@ -30,7 +30,7 @@ public final class ShaderRendererCore: NSObject, MTKViewDelegate {
     private var frame: Int32 = 0
     public var isPaused = false
 
-    /// Phase 9 user uniforms — written by `PropertiesSink.apply` on `ShaderRenderer`
+    /// Phase 9 user uniforms, written by `PropertiesSink.apply` on `ShaderRenderer`
     /// and packed into fragment buffer slot 1 every frame. Dictionary keys are
     /// property names; the on-GPU layout sorts by name so a shader can declare
     /// `constant float4 user[16] [[buffer(1)]]` and address slots positionally.
@@ -96,7 +96,7 @@ public final class ShaderRendererCore: NSObject, MTKViewDelegate {
         )
 
         // Pack user uniforms into a fixed-size 16-slot float4 array. Sorted by
-        // name so the GPU layout is deterministic — shaders that opt in declare
+        // name so the GPU layout is deterministic; shaders that opt in declare
         // `constant float4 user[16] [[buffer(1)]]`; shaders that don't simply
         // ignore the binding.
         var userBuffer = [SIMD4<Float>](
@@ -124,7 +124,7 @@ public final class ShaderRendererCore: NSObject, MTKViewDelegate {
         setUserUniform(name: name, rgba: SIMD4<Float>(value, 0, 0, 0))
     }
 
-    /// Write (or overwrite) a four-channel user uniform — typically an RGBA
+    /// Write (or overwrite) a four-channel user uniform, typically an RGBA
     /// colour. Silently drops new keys once the 16-slot cap is reached so the
     /// fixed-size GPU layout never overflows.
     public func setUserUniform(name: String, rgba: SIMD4<Float>) {

@@ -21,7 +21,7 @@ public struct AppPauseRules: Codable, Equatable, Sendable {
     }
 
     /// Returns the matching rule for the given bundle ID, or nil if no rule
-    /// applies. nil-safe — calling with a `nil` bundleID is a no-op.
+    /// applies. nil-safe, calling with a `nil` bundleID is a no-op.
     public func match(bundleID: String?) -> AppPauseRule? {
         guard let bundleID else { return nil }
         return rules.first(where: { $0.bundleID == bundleID })
@@ -29,7 +29,7 @@ public struct AppPauseRules: Codable, Equatable, Sendable {
 }
 
 public extension SettingsKey where Value == AppPauseRules {
-    /// Default rules — common "I'm probably in a meeting / presentation" apps.
+    /// Default rules: common "I'm probably in a meeting / presentation" apps.
     /// Users can customise via Settings UI (Phase 11).
     static let appPauseRules = SettingsKey<AppPauseRules>(
         name: "appPauseRules",

@@ -115,13 +115,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${HOMEBREW_TAP_TOKEN:-}" ]; then
-            echo "HOMEBREW_TAP_TOKEN not set — skipping tap sync. Add the secret to enable."
+            echo "HOMEBREW_TAP_TOKEN not set, skipping tap sync. Add the secret to enable."
             exit 0
           fi
           VERSION="${GITHUB_REF_NAME#v}"
           DMG="dist/Mural-${VERSION}.dmg"
           if [ ! -f "$DMG" ]; then
-            echo "fatal: $DMG not found — release build skipped DMG step?" >&2
+            echo "fatal: $DMG not found (release build skipped DMG step?)" >&2
             exit 1
           fi
           SHA="$(shasum -a 256 "$DMG" | awk '{print $1}')"

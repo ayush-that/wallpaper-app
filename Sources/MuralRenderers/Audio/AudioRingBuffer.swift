@@ -62,7 +62,7 @@ public final class AudioRingBuffer: Sendable {
     }
 
     /// Returns exactly `count` samples; zero-pads at the FRONT if underfilled.
-    /// Canonical input for FFT — the analyzer always wants a fixed-size window.
+    /// Canonical input for FFT; the analyzer always wants a fixed-size window.
     public func latest(count: Int) -> [Float] {
         let real = read(count: count)
         guard real.count < count else { return real }

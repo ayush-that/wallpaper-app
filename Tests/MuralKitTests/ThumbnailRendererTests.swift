@@ -43,7 +43,7 @@ final class ThumbnailRendererTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: out.path))
         let nsImage = try XCTUnwrap(NSImage(contentsOf: out))
         // CGImageSource's `kCGImageSourceThumbnailMaxPixelSize` is a *max*; the
-        // result may be smaller (especially upscaling — it returns the original).
+        // result may be smaller (especially upscaling - it returns the original).
         XCTAssertGreaterThan(nsImage.size.width, 0)
         XCTAssertLessThanOrEqual(nsImage.size.width, 16)
     }

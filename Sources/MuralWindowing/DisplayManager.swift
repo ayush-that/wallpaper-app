@@ -6,7 +6,7 @@ import OSLog
 /// the display layout changes (hotplug, resolution change, arrangement change).
 ///
 /// This is the single source of truth for "what hosts exist right now." All
-/// state is keyed by `Display.uuid`, which is stable across hotplug — the
+/// state is keyed by `Display.uuid`, which is stable across hotplug. The
 /// underlying `NSScreen` instance may be replaced even when the same physical
 /// display reconnects, so we re-bind frames rather than recreating the window.
 @MainActor

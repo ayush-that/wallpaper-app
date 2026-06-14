@@ -76,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Audio reactivity is opt-in. During Debug builds the binary's cdhash
         // changes every rebuild, so any SCK call retriggers the Screen Recording
-        // TCC prompt — annoying and noisy. The Phase 11 Settings UI will surface
+        // TCC prompt - annoying and noisy. The Phase 11 Settings UI will surface
         // a single toggle that calls `orchestrator?.enableAudio()` on demand;
         // until then audio capture stays dormant. The audio pipeline remains
         // wired so existing audio-reactive web wallpapers will Just Work the
@@ -124,7 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 orchestrator = WallpaperOrchestrator(engine: engine, library: library)
             }
         } else {
-            log.error("Catalog open failed at \(catalogURL.path, privacy: .public) — library disabled this run")
+            log.error("Catalog open failed at \(catalogURL.path, privacy: .public) - library disabled this run")
         }
     }
 
@@ -207,7 +207,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // returned directly from a `MainActor.assumeIsolated` block in a
         // `@Sendable` lookup closure under strict concurrency. Wrap both the
         // engine handoff and the renderer carry-out in `@unchecked Sendable`
-        // boxes — lookups are only ever invoked on MainActor (PauseCoordinator
+        // boxes - lookups are only ever invoked on MainActor (PauseCoordinator
         // hops there before calling), so the unchecked annotation is sound.
         let engineBox = EngineLookupBox(engine)
         let coordinator = PauseCoordinator { uuid in
@@ -288,7 +288,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         remoteSessionWatcher = remote
 
-        // Thermal governor — clamps every active renderer on heat.
+        // Thermal governor - clamps every active renderer on heat.
         let governor = PerformanceGovernor(
             videoApply: { [weak engine] bitrate, maxPixels in
                 guard let engine else { return }

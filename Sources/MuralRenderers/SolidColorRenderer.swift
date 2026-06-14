@@ -25,10 +25,10 @@ public final class SolidColorRenderer: WallpaperRenderer {
     }
 
     public func pause() {
-        // Static content — nothing to pause.
+        // Static content, nothing to pause.
     }
 
     public func resume() {
-        // Static content — nothing to resume.
+        // Static content, nothing to resume.
     }
 }

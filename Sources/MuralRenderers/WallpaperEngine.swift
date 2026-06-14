@@ -8,8 +8,8 @@ import OSLog
 /// pause/resume wallpapers.
 ///
 /// When asked to act on a `Display` whose host is no longer present in the
-/// `DisplayManager` — typically because the display was unplugged between the
-/// caller's snapshot and our action — we log a warning and return rather than
+/// `DisplayManager` (typically because the display was unplugged between the
+/// caller's snapshot and our action) we log a warning and return rather than
 /// crashing.
 @MainActor
 public final class WallpaperEngine {
@@ -95,7 +95,7 @@ public final class WallpaperEngine {
         }
     }
 
-    /// Pause every active renderer. Safe to call repeatedly — renderers are
+    /// Pause every active renderer. Safe to call repeatedly; renderers are
     /// required to make `pause` idempotent.
     public func pauseAll() {
         for renderer in current.values {
@@ -121,7 +121,7 @@ public final class WallpaperEngine {
     }
 
     /// Write the current `(display, wallpaperID)` map to disk. Silently swallows
-    /// errors — losing one snapshot is preferable to crashing the renderer
+    /// errors; losing one snapshot is preferable to crashing the renderer
     /// pipeline; readers (screensaver bundle etc.) will pick up the next write.
     private func persistActive() {
         guard let libraryRoot else { return }

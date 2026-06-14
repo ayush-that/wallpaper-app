@@ -57,7 +57,7 @@ public struct Client {
                 case .failed:
                     // Unix domain sockets on macOS 14+ transition to `.failed`
                     // (NWError 50 "Network is down") instead of `.cancelled`
-                    // after the peer closes — Apple's Network.framework wasn't
+                    // after the peer closes. Apple's Network.framework wasn't
                     // designed for half-duplex datagram-style flows. If we
                     // already accumulated a full JSON response, decode it
                     // rather than reporting a transport failure.
@@ -69,7 +69,7 @@ public struct Client {
                     connection.cancel()
                 case let .waiting(error):
                     // Unix sockets never recover from `.waiting` (the file just
-                    // isn't there yet) — treat it as immediate failure so the
+                    // isn't there yet), treat it as immediate failure so the
                     // CLI doesn't hang when Mural isn't running.
                     box.resume(throwing: ClientError.connectionFailed(error))
                     connection.cancel()

@@ -9,7 +9,7 @@ import OSLog
 /// not left in an indeterminate state.
 ///
 /// Also owns the shared `AudioPipeline`. Every web renderer produced by
-/// `applyToAllDisplays` is auto-subscribed to the pipeline's broadcaster —
+/// `applyToAllDisplays` is auto-subscribed to the pipeline's broadcaster;
 /// when audio is off the broadcaster simply never publishes, so the
 /// subscriptions cost nothing. The UI calls `enableAudio()` once the user
 /// opts in (and grants Screen Recording TCC).
@@ -97,7 +97,7 @@ public final class WallpaperOrchestrator: ObservableObject {
 
     /// Start system audio capture. Idempotent.
     ///
-    /// We don't trust `CGPreflightScreenCaptureAccess()` — on macOS 15+ the
+    /// We don't trust `CGPreflightScreenCaptureAccess()`; on macOS 15+ the
     /// permission was renamed to "Screen & System Audio Recording" and lives
     /// in a different TCC bucket than the legacy "Screen Recording" one the
     /// preflight API checks. Always attempt `audio.start()`; SCStream's own

@@ -6,7 +6,7 @@ final class GIFFrameSequenceTests: XCTestCase {
     private func fixtureURL() throws -> URL {
         try XCTUnwrap(
             Bundle(for: type(of: self)).url(forResource: "2frame", withExtension: "gif", subdirectory: "Fixtures"),
-            "missing Tests/Fixtures/2frame.gif — regenerate with ffmpeg"
+            "missing Tests/Fixtures/2frame.gif - regenerate with ffmpeg"
         )
     }
 
