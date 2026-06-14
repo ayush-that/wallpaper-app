@@ -57,6 +57,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateManager = UpdateManager()
 
         observableSettings = ObservableSettings(store: settings)
+        observableSettings?.onAudioReactiveChange = { [weak self] enabled in
+            self?.setAudioReactive(enabled)
+        }
 
         SystemWallpaperOverride.applyAll()
 
@@ -74,13 +77,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         startControlSocket()
 
-        // Audio reactivity is opt-in. During Debug builds the binary's cdhash
-        // changes every rebuild, so any SCK call retriggers the Screen Recording
-        // TCC prompt - annoying and noisy. The Phase 11 Settings UI will surface
-        // a single toggle that calls `orchestrator?.enableAudio()` on demand;
-        // until then audio capture stays dormant. The audio pipeline remains
-        // wired so existing audio-reactive web wallpapers will Just Work the
-        // moment the user opts in.
+        // Audio reactivity is opt-in via the Settings > Audio toggle, which
+        // drives `setAudioReactive(_:)` -> `orchestrator.enableAudio()`. We
+        // never auto-start capture at launch: during Debug builds the binary's
+        // cdhash changes every rebuild, so any ScreenCaptureKit call retriggers
+        // the Screen Recording TCC prompt. The toggle is session state (defaults
+        // off each launch) for the same reason.
+    }
+
+    /// Starts or stops system-audio capture in response to the Settings toggle.
+    /// If capture fails to start (e.g. the Screen Recording permission was
+    /// declined) we flip the toggle back off so it reflects the real state;
+    /// `enableAudio()` itself posts the permission onboarding sheet in that case.
+    private func setAudioReactive(_ enabled: Bool) {
+        guard let orchestrator else { return }
+        Task { @MainActor in
+            if enabled {
+                let started = await orchestrator.enableAudio()
+                if !started {
+                    self.observableSettings?.audioReactive = false
+                }
+            } else {
+                await orchestrator.disableAudio()
+            }
+        }
     }
 
     func applicationWillTerminate(_: Notification) {
@@ -365,7 +385,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func dispatch(_ command: Command) -> CommandResponse {
+    private func dropped(_ url: URL) {
+        guard let engine else { return }
+        do {
+            let asset = try VideoAsset(url: url)
+            let mode = activeScaleMode
+            engine.setRendererForAllDisplays {
+                do {
+                    return try VideoRenderer(asset: asset, scaleMode: mode)
+                } catch {
+                    Log.logger("AppDelegate").error(
+                        "VideoRenderer init failed: \(error.localizedDescription, privacy: .public)"
+                    )
+                    return SolidColorRenderer(color: .black)
+                }
+            }
+            log.info("Dropped video: \(url.lastPathComponent, privacy: .public)")
+        } catch {
+            log.error("Drop rejected: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+}
+
+// MARK: - ControlSocket command dispatch
+
+private extension AppDelegate {
+    func dispatch(_ command: Command) -> CommandResponse {
         switch command {
         case let .set(wallpaperID, displayUUID):
             return handleSet(wallpaperID: wallpaperID, displayUUID: displayUUID)
@@ -391,7 +436,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func handleSet(wallpaperID: UUID, displayUUID _: String?) -> CommandResponse {
+    func handleSet(wallpaperID: UUID, displayUUID _: String?) -> CommandResponse {
         guard let library = libraryService, let orchestrator else {
             return .failure("library not ready")
         }
@@ -407,7 +452,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func handleClose(displayUUID _: String?) -> CommandResponse {
+    func handleClose(displayUUID _: String?) -> CommandResponse {
         guard let engine else { return .failure("engine not ready") }
         // Per-display close is future polish. v1 clears every display by
         // swapping in a transparent SolidColorRenderer.
@@ -415,7 +460,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return .success("closed")
     }
 
-    private func handleSetProperty(
+    func handleSetProperty(
         wallpaperID: UUID,
         displayUUID _: String?,
         name: String,
@@ -431,7 +476,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return .success("set \(name) on \(wallpaperID.uuidString.prefix(8))")
     }
 
-    private func handleImport(path: String) -> CommandResponse {
+    func handleImport(path: String) -> CommandResponse {
         guard let library = libraryService else { return .failure("library not ready") }
         let url = URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
         do {
@@ -442,7 +487,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func handleStatus() -> CommandResponse {
+    func handleStatus() -> CommandResponse {
         do {
             guard let status = try ActiveStatus.read() else {
                 return .success(statusJSON: "{\"displays\":[],\"libraryRoot\":\"\"}")
@@ -455,27 +500,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return .success(statusJSON: json)
         } catch {
             return .failure(error.localizedDescription)
-        }
-    }
-
-    private func dropped(_ url: URL) {
-        guard let engine else { return }
-        do {
-            let asset = try VideoAsset(url: url)
-            let mode = activeScaleMode
-            engine.setRendererForAllDisplays {
-                do {
-                    return try VideoRenderer(asset: asset, scaleMode: mode)
-                } catch {
-                    Log.logger("AppDelegate").error(
-                        "VideoRenderer init failed: \(error.localizedDescription, privacy: .public)"
-                    )
-                    return SolidColorRenderer(color: .black)
-                }
-            }
-            log.info("Dropped video: \(url.lastPathComponent, privacy: .public)")
-        } catch {
-            log.error("Drop rejected: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

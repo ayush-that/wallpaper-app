@@ -21,6 +21,11 @@ public struct GeneralPane: View {
             }
             Section("Audio") {
                 Toggle("Mute wallpaper audio", isOn: $settings.muteWallpaperAudio)
+                Toggle("Audio-reactive wallpapers", isOn: $settings.audioReactive)
+                Text("Lets web wallpapers react to system audio. Requires Screen "
+                    + "Recording permission and resets each time you quit Mural.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Updates") {
                 Toggle("Check for updates automatically", isOn: $updateManager.automaticallyChecksForUpdates)
