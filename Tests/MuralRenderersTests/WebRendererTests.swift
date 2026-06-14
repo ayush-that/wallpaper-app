@@ -28,44 +28,54 @@ final class WebRendererTests: XCTestCase {
     func test_console_message_round_trips_from_js_to_native() throws {
         let url = try fixtureURL()
         let renderer = WebRenderer(entryURL: url, packageRoot: url.deletingLastPathComponent())
-        var captured: [WebBridgeMessage] = []
-        renderer.onBridgeMessage = { captured.append($0) }
+
+        // Fulfill as soon as the expected message arrives rather than sampling
+        // once after a fixed delay: a headless WebView in CI can take longer
+        // than a couple of seconds to load the page and round-trip the console
+        // call, which made the fixed-delay version flaky.
+        let expectation = expectation(description: "console message arrives")
+        expectation.assertForOverFulfill = false
+        renderer.onBridgeMessage = { message in
+            if case let .console(_, text) = message, text.contains("hello from web wallpaper") {
+                expectation.fulfill()
+            }
+        }
         renderer.attach(to: makeHost())
 
-        let expectation = expectation(description: "console message arrives")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            let consoleHits = captured.compactMap { message -> String? in
-                if case let .console(_, text) = message { return text }
-                return nil
-            }
-            let matched = consoleHits.contains(where: { $0.contains("hello from web wallpaper") })
-            XCTAssertTrue(matched, "expected to receive 'hello from web wallpaper' console message; got \(consoleHits)")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 5.0)
+        wait(for: [expectation], timeout: 15.0)
     }
 
     func test_set_property_invokes_livelyPropertyListener() throws {
         let url = try fixtureURL()
         let renderer = WebRenderer(entryURL: url, packageRoot: url.deletingLastPathComponent())
-        renderer.attach(to: makeHost())
 
         let expectation = expectation(description: "dot background changes after setProperty")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            renderer.set(property: "color", value: .color("#00ff00"))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let webView = renderer.testWebView
-                webView.evaluateJavaScript("document.getElementById('dot').style.background") { result, _ in
-                    let css = (result as? String) ?? ""
-                    XCTAssertTrue(
-                        css.contains("rgb(0, 255, 0)") || css.contains("#00ff00") || css.contains("0, 255, 0"),
-                        "expected green; got '\(css)'"
-                    )
+        expectation.assertForOverFulfill = false
+
+        func pollForGreen(attemptsLeft: Int) {
+            renderer.testWebView.evaluateJavaScript("document.getElementById('dot').style.background") { result, _ in
+                let css = (result as? String) ?? ""
+                if css.contains("rgb(0, 255, 0)") || css.contains("#00ff00") || css.contains("0, 255, 0") {
                     expectation.fulfill()
+                } else if attemptsLeft > 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        pollForGreen(attemptsLeft: attemptsLeft - 1)
+                    }
                 }
             }
         }
-        wait(for: [expectation], timeout: 6.0)
+
+        var started = false
+        renderer.onBridgeMessage = { message in
+            guard !started, case let .console(_, text) = message,
+                  text.contains("hello from web wallpaper") else { return }
+            started = true
+            renderer.set(property: "color", value: .color("#00ff00"))
+            pollForGreen(attemptsLeft: 50)
+        }
+        renderer.attach(to: makeHost())
+
+        wait(for: [expectation], timeout: 15.0)
     }
 
     func test_detach_clears_host() throws {
