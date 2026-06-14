@@ -1,16 +1,19 @@
 # Pre-commit hooks for Mural.
 #
-# One-time setup:
-#   brew install pre-commit swiftformat swiftlint
+# One-time setup (required - a clone without this has NO commit gate):
+#   brew install pre-commit xcodegen swiftformat swiftlint xcbeautify
 #   pre-commit install
 #
-# Run against every file on demand:
+# Run the full gate on demand:
 #   pre-commit run --all-files
 #
-# SwiftFormat and SwiftLint run as `language: system` hooks so they use the
-# Homebrew-installed binaries rather than building the tools from source on
-# each run. CI runs the same tools through scripts/lint.sh across the whole
-# tree; these hooks run on the files you are about to commit.
+# The `preflight` hook runs scripts/preflight.sh, which mirrors the CI
+# build-test job exactly: lint + format (scripts/lint.sh), then xcodegen,
+# build, and the full test suite. It runs once per commit (not per file), so a
+# commit cannot land unless it would pass CI. Lint and format authority lives
+# in scripts/lint.sh (SwiftFormat in --lint mode + SwiftLint --strict); if it
+# reports formatting issues, fix them with:
+#   swiftformat App Sources Tests Tools
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -24,13 +27,10 @@ repos:
 
   - repo: local
     hooks:
-      - id: swiftformat
-        name: swiftformat
-        entry: swiftformat
+      - id: preflight
+        name: preflight (lint, format, build, test - CI parity)
+        entry: scripts/preflight.sh
         language: system
-        types: [swift]
-      - id: swiftlint
-        name: swiftlint
-        entry: swiftlint lint --strict
-        language: system
-        types: [swift]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
