@@ -11,6 +11,8 @@ A native macOS live wallpaper engine. Animated video, web, and Metal shader wall
 
 Mural lives in the menu bar and draws a live wallpaper on the desktop layer, behind your icons, on each connected display. It pauses itself when a fullscreen app is in front, when you unplug from power, or when Low Power Mode is on, so an animated desktop never costs you a battery charge.
 
+<img width="1190" height="752" alt="image" src="https://github.com/user-attachments/assets/a751c9f1-ee95-464f-905e-8a76e4beed36" />
+
 ## Features
 
 - **Video wallpapers** from mp4, mov, webm/VP9, mkv, and m4v, hardware decoded with audio suppressed by default
