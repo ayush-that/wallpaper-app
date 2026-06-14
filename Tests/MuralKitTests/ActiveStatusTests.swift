@@ -51,4 +51,16 @@ final class ActiveStatusTests: XCTestCase {
         XCTAssertTrue(url.path.contains("Application Support/Mural"))
         XCTAssertEqual(url.lastPathComponent, "active.json")
     }
+
+    func test_url_for_library_root_is_a_sibling_of_the_library_directory() {
+        let root = URL(fileURLWithPath: "/var/folders/xx/T/abc/library", isDirectory: true)
+        let url = ActiveStatus.url(forLibraryRoot: root)
+        XCTAssertEqual(url, URL(fileURLWithPath: "/var/folders/xx/T/abc/active.json"))
+    }
+
+    func test_url_for_production_library_root_equals_default_url() {
+        // The real app derives the status path from its library root; that must
+        // resolve to the same file external readers use via defaultURL().
+        XCTAssertEqual(ActiveStatus.url(forLibraryRoot: LibraryRoot.defaultURL()), ActiveStatus.defaultURL())
+    }
 }
