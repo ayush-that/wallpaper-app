@@ -9,6 +9,11 @@ A native macOS live wallpaper engine. Animated video, web, and Metal shader wall
 [![Swift 5.10](https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
+> [!WARNING]
+> **Mural is alpha software and a work in progress.** It is under active
+> development and nowhere near a finished product. Expect rough edges, missing
+> features, bugs, and breaking changes at any time. Use it at your own risk.
+
 Mural lives in the menu bar and draws a live wallpaper on the desktop layer, behind your icons, on each connected display. It pauses itself when a fullscreen app is in front, when you unplug from power, or when Low Power Mode is on, so an animated desktop never costs you a battery charge.
 
 <img width="1190" height="752" alt="image" src="https://github.com/user-attachments/assets/a751c9f1-ee95-464f-905e-8a76e4beed36" />
