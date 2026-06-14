@@ -10,13 +10,20 @@ settings:
   base:
     SWIFT_VERSION: "5.10"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-    CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""
     ENABLE_HARDENED_RUNTIME: YES
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     GCC_TREAT_WARNINGS_AS_ERRORS: YES
     ENABLE_USER_SCRIPT_SANDBOXING: NO
+  configs:
+    # Signing is config-specific. Release keeps the existing behaviour (the
+    # release workflow signs with Developer ID via scripts/sign-and-notarize.sh).
+    # Debug signing is sourced from Config/Debug.xcconfig on the app target so a
+    # gitignored Config/Local.xcconfig can pin a stable identity (see
+    # CONTRIBUTING.md). Without that file the Debug build stays ad-hoc.
+    Release:
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: ""
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
@@ -91,6 +98,8 @@ targets:
         com.apple.security.cs.allow-jit: true
         com.apple.security.cs.disable-library-validation: true
         com.apple.security.automation.apple-events: true
+    configFiles:
+      Debug: Config/Debug.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.mural.Mural
