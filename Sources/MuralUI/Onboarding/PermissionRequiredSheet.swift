@@ -51,6 +51,7 @@ public struct PermissionRequiredSheet: View {
     private var detail: String {
         switch service {
         case .screenRecording:
+            // swiftlint:disable:next line_length
             "Mural reads system audio through Screen Recording (Apple's only API path for desktop audio). No screen content is recorded — only the audio stream is consumed for audio-reactive wallpapers."
         case .automation:
             "Mural detects which app is in the foreground so wallpapers can pause when needed."

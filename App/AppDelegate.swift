@@ -201,6 +201,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func setupPolicyWatchers(engine: WallpaperEngine, displayManager: DisplayManager) {
         // `WallpaperRenderer` is `AnyObject` but not `Sendable`, so it can't be
         // returned directly from a `MainActor.assumeIsolated` block in a

@@ -18,7 +18,7 @@ jobs:
           sudo xcode-select -s "/Applications/$NEWEST/Contents/Developer"
           xcodebuild -version
       - name: Install tools
-        run: brew install xcodegen swiftformat xcbeautify
+        run: brew install xcodegen swiftformat swiftlint xcbeautify
       - name: Lint
         run: ./scripts/lint.sh
       - name: Generate project

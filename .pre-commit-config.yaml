@@ -1,0 +1,36 @@
+# Pre-commit hooks for Mural.
+#
+# One-time setup:
+#   brew install pre-commit swiftformat swiftlint
+#   pre-commit install
+#
+# Run against every file on demand:
+#   pre-commit run --all-files
+#
+# SwiftFormat and SwiftLint run as `language: system` hooks so they use the
+# Homebrew-installed binaries rather than building the tools from source on
+# each run. CI runs the same tools through scripts/lint.sh across the whole
+# tree; these hooks run on the files you are about to commit.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: swiftformat
+        entry: swiftformat
+        language: system
+        types: [swift]
+      - id: swiftlint
+        name: swiftlint
+        entry: swiftlint lint --strict
+        language: system
+        types: [swift]

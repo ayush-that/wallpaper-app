@@ -48,21 +48,22 @@ final class LivelyPropertiesCodecTests: XCTestCase {
     func test_color_decodes_hex_string_verbatim() throws {
         let controls = try LivelyPropertiesCodec.decode(fixtureData())
         let tint = try XCTUnwrap(controls.first(where: { $0.name == "tint" }))
-        guard case let .color(_, _, value) = tint else { return XCTFail() }
+        guard case let .color(_, _, value) = tint else { return XCTFail("expected .color, got \(tint)") }
         XCTAssertEqual(value, "#ff8800")
     }
 
     func test_checkbox_decodes_bool() throws {
         let controls = try LivelyPropertiesCodec.decode(fixtureData())
         let smooth = try XCTUnwrap(controls.first(where: { $0.name == "smooth" }))
-        guard case let .checkbox(_, _, value) = smooth else { return XCTFail() }
+        guard case let .checkbox(_, _, value) = smooth else { return XCTFail("expected .checkbox, got \(smooth)") }
         XCTAssertTrue(value)
     }
 
     func test_dropdown_decodes_items_and_selected_index() throws {
         let controls = try LivelyPropertiesCodec.decode(fixtureData())
         let engine = try XCTUnwrap(controls.first(where: { $0.name == "engine" }))
-        guard case let .dropdown(_, _, items, value) = engine else { return XCTFail() }
+        guard case let .dropdown(_, _, items, value) = engine
+        else { return XCTFail("expected .dropdown, got \(engine)") }
         XCTAssertEqual(items, ["webgl", "canvas"])
         XCTAssertEqual(value, 0)
     }
@@ -102,7 +103,7 @@ final class LivelyPropertiesCodecTests: XCTestCase {
         """#.utf8)
         let controls = try LivelyPropertiesCodec.decode(data)
         guard case let .slider(_, _, value, _, _, _) = try XCTUnwrap(controls.first) else {
-            return XCTFail()
+            return XCTFail("expected .slider as the first control")
         }
         XCTAssertEqual(value, 5.0)
     }
