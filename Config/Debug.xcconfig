@@ -1,0 +1,13 @@
+// Base Debug configuration for the Mural app target.
+//
+// macOS ties privacy (TCC) grants such as Screen Recording to an app's code
+// signing identity. An ad-hoc signature has no stable identity, so the grant is
+// keyed on the binary hash, which changes on every rebuild and forces the
+// permission prompt to reappear. Signing Debug with a real identity keeps the
+// grant across rebuilds.
+//
+// To enable that locally, create a gitignored Config/Local.xcconfig with your
+// signing identity (see CONTRIBUTING.md). When the file is absent this include
+// is skipped and the Debug build stays ad-hoc, so the repo and CI are
+// unaffected.
+#include? "Local.xcconfig"

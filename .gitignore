@@ -66,3 +66,6 @@ AuthKey_*.p8
 
 # Internal development plans and research notes (not for the public repo)
 docs/superpowers/
+
+# Local signing override (per-machine, not committed)
+Config/Local.xcconfig
