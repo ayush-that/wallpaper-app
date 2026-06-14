@@ -143,6 +143,6 @@ public final class WallpaperOrchestrator: ObservableObject {
     /// expose a stable "primary" concept here; we pick the first attached display
     /// alphabetically so per-display overrides are deterministic across launches.
     public func primaryDisplayUUID() -> String? {
-        engine.activeRendererUUIDs.sorted().first
+        engine.activeRendererUUIDs.min()
     }
 }

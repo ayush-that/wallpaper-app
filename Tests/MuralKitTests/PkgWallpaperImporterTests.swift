@@ -41,7 +41,7 @@ final class PkgWallpaperImporterTests: XCTestCase {
 
     func test_unsupported_project_type_throws() throws {
         // Build a tiny .pkg whose project.json declares type=scene
-        let sceneProject = #"{"type":"scene","file":"x"}"#.data(using: .utf8)!
+        let sceneProject = Data(#"{"type":"scene","file":"x"}"#.utf8)
         let badPkg = try makePkg(entries: [("project.json", sceneProject)])
         defer { try? FileManager.default.removeItem(at: badPkg) }
 
@@ -82,7 +82,7 @@ final class PkgWallpaperImporterTests: XCTestCase {
         var header = Data()
         header.append(u32(UInt32(entries.count)))
         for (i, (name, _)) in entries.enumerated() {
-            let nameBytes = name.data(using: .utf8)!
+            let nameBytes = Data(name.utf8)
             header.append(u32(UInt32(nameBytes.count)))
             header.append(nameBytes)
             header.append(u32(offsets[i].0))

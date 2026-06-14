@@ -202,6 +202,7 @@ private final class DiagnosticCounters: @unchecked Sendable {
         if absMax > absMaxSinceLastLog { absMaxSinceLastLog = absMax }
         let now = CACurrentMediaTime()
         let shouldEmit = now - lastLogTime > 1.0 && framesSinceLastLog > 0
+        // swiftlint:disable:next large_tuple
         let snapshot: (Int, Double, Float, TimeInterval)? = shouldEmit
             ? (framesSinceLastLog, absSumSinceLastLog, absMaxSinceLastLog, now - lastLogTime)
             : nil
@@ -217,6 +218,7 @@ private final class DiagnosticCounters: @unchecked Sendable {
         let average = totalSum / Double(max(totalFrames, 1))
         log.info(
             // swiftformat:disable next:wrap
+            // swiftlint:disable:next line_length
             "SCStream audio diag: window=\(window, format: .fixed(precision: 2))s frames=\(totalFrames) channels=\(channels) buffers=\(mNumberBuffers) bufCh=\(mNumberChannels) sr=\(asbd.mSampleRate) bitsPerCh=\(asbd.mBitsPerChannel) bytesPerFrame=\(asbd.mBytesPerFrame) formatID=\(asbd.mFormatID) flags=\(asbd.mFormatFlags) absMax=\(peakMax, format: .fixed(precision: 5)) absAvg=\(average, format: .fixed(precision: 6))"
         )
     }

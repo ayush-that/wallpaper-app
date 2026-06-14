@@ -1,0 +1,86 @@
+# SwiftLint configuration for Mural.
+# Docs: https://realm.github.io/SwiftLint
+#
+# SwiftFormat (.swiftformat) owns whitespace and brace-wrapping style; SwiftLint
+# here focuses on correctness and readability rules that the formatter does not
+# cover. Rules that would fight the formatter are disabled below.
+
+included:
+  - App
+  - Sources
+  - Tools
+  - Tests
+
+excluded:
+  - .build
+  - Mural.xcodeproj
+  - Tests/Fixtures
+  - Tests/FixtureSources
+
+disabled_rules:
+  # SwiftFormat wraps the opening brace of multiline statements onto its own
+  # line (see .swiftformat). SwiftLint's opening_brace and
+  # closure_parameter_position rules want things on the same line, which
+  # directly conflicts, so let the formatter own brace and parameter layout.
+  - opening_brace
+  - closure_parameter_position
+  # TODO/FIXME notes are kept intentionally as phase markers.
+  - todo
+
+opt_in_rules:
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_count
+  - first_where
+  - last_where
+  - sorted_first_last
+  - toggle_bool
+
+line_length:
+  warning: 160
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  # Shader uniforms (iTime, x, y, u) and short math locals are legitimate.
+  min_length: 1
+  max_length:
+    warning: 60
+    error: 80
+  # GPU struct padding fields carry a leading underscore on purpose.
+  excluded:
+    - _pad0
+    - _pad1
+
+type_name:
+  max_length:
+    warning: 50
+    error: 60
+
+function_body_length:
+  warning: 80
+  error: 150
+
+type_body_length:
+  warning: 400
+  error: 600
+
+file_length:
+  warning: 600
+  error: 1000
+  ignore_comment_only_lines: true
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+large_tuple:
+  warning: 3
+  error: 4
+
+reporter: "xcode"
