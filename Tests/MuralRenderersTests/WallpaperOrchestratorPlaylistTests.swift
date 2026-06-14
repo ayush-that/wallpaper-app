@@ -68,15 +68,14 @@ final class WallpaperOrchestratorPlaylistTests: XCTestCase {
     func test_active_status_file_written_after_apply() throws {
         let imported = try library.importFile(at: fixtureMP4())
         orchestrator.applyToAllDisplays(wallpaper: imported)
-        // Engine should have written ActiveStatus to disk under library root's parent.
-        // Default URL is under ~/Library/Application Support/Mural, pull from there
-        // and just verify it's been touched recently (within the last few seconds).
-        let url = ActiveStatus.defaultURL()
-        if let status = try? ActiveStatus.read(from: url) {
-            XCTAssertTrue(Date().timeIntervalSince(status.updatedAt) < 10)
-            XCTAssertTrue(status.displays.contains(where: { $0.wallpaperID == imported.id }))
-        }
-        // If the file doesn't exist (e.g. AppSupport not writable in CI), don't fail.
-        // the assertion above is the strong-form check; absence is acceptable.
+        // The engine writes ActiveStatus as a sibling of its library root, so for
+        // this temp-rooted test it lands inside the test's own directory rather
+        // than the real ~/Library/Application Support/Mural/active.json. That temp
+        // dir is always writable, so this is a strong assertion.
+        let url = ActiveStatus.url(forLibraryRoot: library.libraryRoot)
+        XCTAssertNotEqual(url, ActiveStatus.defaultURL(), "test must not touch the production status file")
+        let status = try XCTUnwrap(ActiveStatus.read(from: url))
+        XCTAssertTrue(Date().timeIntervalSince(status.updatedAt) < 10)
+        XCTAssertTrue(status.displays.contains(where: { $0.wallpaperID == imported.id }))
     }
 }

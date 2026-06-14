@@ -132,7 +132,7 @@ public final class WallpaperEngine {
             libraryRoot: libraryRoot.path
         )
         do {
-            try ActiveStatus.write(snapshot)
+            try ActiveStatus.write(snapshot, to: ActiveStatus.url(forLibraryRoot: libraryRoot))
         } catch {
             log.error("ActiveStatus write failed: \(error.localizedDescription, privacy: .public)")
         }

@@ -34,6 +34,14 @@ public struct ActiveStatus: Codable, Equatable, Sendable {
             .appendingPathComponent("Mural/\(filename)")
     }
 
+    /// The status file as a sibling of the library directory (like the catalog),
+    /// so each library root gets its own snapshot. For the production library
+    /// root this resolves to the same path as `defaultURL()`; for a test's temp
+    /// root it stays inside that temp dir instead of clobbering the real file.
+    public static func url(forLibraryRoot libraryRoot: URL) -> URL {
+        libraryRoot.deletingLastPathComponent().appendingPathComponent(filename)
+    }
+
     /// Atomic write: readers see either the old or new contents, never partial.
     public static func write(_ status: ActiveStatus, to url: URL = defaultURL()) throws {
         try FileManager.default.createDirectory(
