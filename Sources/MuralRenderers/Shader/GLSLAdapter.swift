@@ -3,7 +3,7 @@ import Foundation
 /// String-level adapter that rewrites a subset of ShaderToy/GLSL syntax to
 /// Metal Shading Language. Covers vector/matrix type renames and the most
 /// common `texture(sampler, uv)` form. Anything else (mod, mix-with-bvec,
-/// gl_FragCoord, etc.) is left alone — if the resulting MSL fails to
+/// gl_FragCoord, etc.) is left alone; if the resulting MSL fails to
 /// compile, ShaderRenderer surfaces the error to the user.
 ///
 /// Known limitations (v1):

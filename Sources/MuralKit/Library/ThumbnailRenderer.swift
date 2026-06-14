@@ -14,7 +14,7 @@ public enum ThumbnailRendererError: Error, Equatable {
 /// `AVAssetImageGenerator`). Used by importers to populate the library.
 public enum ThumbnailRenderer {
     /// Render a thumbnail from an image file at `imageURL` into `dest` as PNG.
-    /// `size` is interpreted as `kCGImageSourceThumbnailMaxPixelSize` — a max
+    /// `size` is interpreted as `kCGImageSourceThumbnailMaxPixelSize`, a max
     /// for the longer edge; the result may be smaller (especially when the
     /// source would otherwise be upscaled).
     public static func render(imageURL: URL, to dest: URL, size: CGSize) throws {

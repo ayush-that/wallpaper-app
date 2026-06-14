@@ -10,7 +10,7 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
     private let webView: WKWebView
     private weak var host: WallpaperHost?
 
-    /// Optional callback for JS→native messages — set by the orchestrator if it
+    /// Optional callback for JS→native messages, set by the orchestrator if it
     /// needs to observe console / propertyChanged / ready events.
     public var onBridgeMessage: (@MainActor (WebBridgeMessage) -> Void)?
 
@@ -86,7 +86,7 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
     }
 
     /// Subscribe to an audio broadcaster. The broadcaster will call
-    /// `deliver(audioArray:)` on each FFT tick. Idempotent — re-attaching to
+    /// `deliver(audioArray:)` on each FFT tick. Idempotent; re-attaching to
     /// the same (or a different) broadcaster replaces the prior subscription.
     public func attachAudio(_ broadcaster: AudioBroadcaster) {
         if let (currentBroadcaster, token) = currentAudioToken {
@@ -148,7 +148,7 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
         config.allowsAirPlayForMediaPlayback = false
 
         let webView = WKWebView(frame: .zero, configuration: config)
-        // Transparent background — the only public path on macOS 15+.
+        // Transparent background, the only public path on macOS 15+.
         webView.setValue(false, forKey: "drawsBackground")
         webView.allowsBackForwardNavigationGestures = false
         webView.allowsLinkPreview = false
@@ -178,7 +178,7 @@ public final class WebRenderer: NSObject, WallpaperRenderer {
     }
 
     /// Escape a single-quoted JS string literal. Handles backslashes, single
-    /// quotes, newlines. Inputs are property names from a manifest — short
+    /// quotes, newlines. Inputs are property names from a manifest, short
     /// enough that a regex isn't needed.
     private static func escapedJSString(_ s: String) -> String {
         s.replacingOccurrences(of: "\\", with: "\\\\")

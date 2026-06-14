@@ -12,7 +12,7 @@ struct MuralApp: App {
 }
 
 /// Bridges AppDelegate's `ObservableSettings?` and `UpdateManager?` into the
-/// SwiftUI scene. When AppDelegate hasn't fully initialised yet (rare — only
+/// SwiftUI scene. When AppDelegate hasn't fully initialised yet (rare - only
 /// during the very first frame), shows a placeholder.
 private struct SettingsRoot: View {
     let appDelegate: AppDelegate

@@ -69,14 +69,14 @@ final class WallpaperOrchestratorPlaylistTests: XCTestCase {
         let imported = try library.importFile(at: fixtureMP4())
         orchestrator.applyToAllDisplays(wallpaper: imported)
         // Engine should have written ActiveStatus to disk under library root's parent.
-        // Default URL is under ~/Library/Application Support/Mural — pull from there
+        // Default URL is under ~/Library/Application Support/Mural, pull from there
         // and just verify it's been touched recently (within the last few seconds).
         let url = ActiveStatus.defaultURL()
         if let status = try? ActiveStatus.read(from: url) {
             XCTAssertTrue(Date().timeIntervalSince(status.updatedAt) < 10)
             XCTAssertTrue(status.displays.contains(where: { $0.wallpaperID == imported.id }))
         }
-        // If the file doesn't exist (e.g. AppSupport not writable in CI), don't fail —
+        // If the file doesn't exist (e.g. AppSupport not writable in CI), don't fail.
         // the assertion above is the strong-form check; absence is acceptable.
     }
 }

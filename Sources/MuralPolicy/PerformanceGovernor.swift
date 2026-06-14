@@ -3,7 +3,7 @@ import OSLog
 
 /// Listens to `ProcessInfo.thermalState` and invokes injected appliers to clamp
 /// video bitrate/resolution and shader framerate when the system is hot. The
-/// injection model decouples the policy logic from the renderer registry — the
+/// injection model decouples the policy logic from the renderer registry: the
 /// AppDelegate wires the appliers to iterate every active renderer.
 @MainActor
 public final class PerformanceGovernor {
@@ -42,7 +42,7 @@ public final class PerformanceGovernor {
         Self.apply(state: state, videoApply: videoApply, shaderApply: shaderApply)
     }
 
-    /// Pure mapping function — exposed for testability.
+    /// Pure mapping function, exposed for testability.
     public static func apply(
         state: ProcessInfo.ThermalState,
         videoApply: VideoApplier,

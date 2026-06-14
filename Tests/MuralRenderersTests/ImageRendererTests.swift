@@ -59,7 +59,7 @@ final class ImageRendererTests: XCTestCase {
         let renderer = ImageRenderer(url: bogus, scaleMode: .fill)
         let host = WallpaperHost(frame: .zero)
         renderer.attach(to: host)
-        // Layer is installed but `contents` is nil — visible as a transparent square.
+        // Layer is installed but `contents` is nil, visible as a transparent square.
         let layer = host.layer?.sublayers?.first
         XCTAssertNotNil(layer)
         XCTAssertNil(layer?.contents)

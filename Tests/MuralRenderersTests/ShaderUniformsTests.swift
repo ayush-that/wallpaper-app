@@ -38,7 +38,7 @@ final class ShaderUniformsTests: XCTestCase {
         ) ?? Bundle.main.url(forResource: "base", withExtension: "metal")
         let resolved = try XCTUnwrap(
             url,
-            "base.metal not bundled — check Resources/shader/ in project.yml"
+            "base.metal not bundled - check Resources/shader/ in project.yml"
         )
         let source = try String(contentsOf: resolved, encoding: .utf8)
         XCTAssertTrue(source.contains("mural_vertex"), "base.metal must declare mural_vertex")

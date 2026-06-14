@@ -121,7 +121,7 @@ final class WebBridgeMessageTests: XCTestCase {
     }
 
     func test_double_does_not_get_truncated_to_int_when_whole_number() throws {
-        // JSON `5` is integral — decoder will pick `.int`. JSON `5.0` is fractional — `.double`.
+        // JSON `5` is integral (decoder picks `.int`). JSON `5.0` is fractional (`.double`).
         // Verify both paths.
         let intRaw = Data(#"{"type":"propertyChanged","name":"x","value":5}"#.utf8)
         let dblRaw = Data(#"{"type":"propertyChanged","name":"x","value":5.0}"#.utf8)
@@ -136,7 +136,7 @@ final class WebBridgeMessageTests: XCTestCase {
         // Int-first. We try Int(...) before Double(...) in init(from:), so this
         // is acceptable behavior: 5.0 may also decode as .int(5).
         if case let .propertyChanged(_, v) = dblMsg {
-            // Accept either — both representations are equally valid.
+            // Accept either, both representations are equally valid.
             XCTAssertTrue(v == .int(5) || v == .double(5.0), "got \(v)")
         } else { XCTFail("expected .propertyChanged from dblMsg, got \(dblMsg)") }
     }

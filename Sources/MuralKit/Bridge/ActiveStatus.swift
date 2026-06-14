@@ -34,7 +34,7 @@ public struct ActiveStatus: Codable, Equatable, Sendable {
             .appendingPathComponent("Mural/\(filename)")
     }
 
-    /// Atomic write — readers see either the old or new contents, never partial.
+    /// Atomic write: readers see either the old or new contents, never partial.
     public static func write(_ status: ActiveStatus, to url: URL = defaultURL()) throws {
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(),

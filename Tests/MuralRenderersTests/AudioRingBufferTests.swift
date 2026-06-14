@@ -68,7 +68,7 @@ final class AudioRingBufferTests: XCTestCase {
         // Total writes = 4 × 250 × 4 = 4000 samples written; capacity 1024 → ring full.
         let snapshot = ring.read(count: 1024)
         XCTAssertEqual(snapshot.count, 1024)
-        // All values come from {0.1, 0.2, 0.3, 0.4} — no torn writes.
+        // All values come from {0.1, 0.2, 0.3, 0.4}, no torn writes.
         for value in snapshot {
             XCTAssertTrue(
                 [0.1, 0.2, 0.3, 0.4].contains(value),

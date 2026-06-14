@@ -29,7 +29,7 @@ public final class LibraryService {
         try catalog.all()
     }
 
-    /// Path-only — does not read the on-disk metadata. The package may not exist
+    /// Path-only, does not read the on-disk metadata. The package may not exist
     /// (e.g. after a partial remove); callers that need to read should wrap with try.
     public func package(for id: UUID) -> WallpaperPackage {
         WallpaperPackage(root: LibraryRoot.packageURL(root: libraryRoot, id: id))

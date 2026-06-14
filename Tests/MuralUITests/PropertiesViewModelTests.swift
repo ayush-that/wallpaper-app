@@ -142,7 +142,7 @@ final class PropertiesViewModelTests: XCTestCase {
             store: store
         )
         vm.set(.double(0.9), for: "speed")
-        // Debounce is 120ms — wait 400ms to be safe.
+        // Debounce is 120ms, wait 400ms to be safe.
         try await Task.sleep(nanoseconds: 400_000_000)
         let onDisk = store.read(
             wallpaperID: wallpaper,

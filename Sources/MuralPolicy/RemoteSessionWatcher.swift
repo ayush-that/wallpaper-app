@@ -3,7 +3,7 @@ import OSLog
 import Quartz
 
 /// Polls whether the current session is running on the console (local) or via
-/// a remote control tool (Screen Sharing, VNC, ARD). Coarse polling — remote
+/// a remote control tool (Screen Sharing, VNC, ARD). Coarse polling: remote
 /// connect/disconnect is a rare event so 5 s latency is fine.
 @MainActor
 public final class RemoteSessionWatcher {

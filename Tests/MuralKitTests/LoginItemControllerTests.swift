@@ -27,10 +27,10 @@ final class LoginItemControllerTests: XCTestCase {
     }
 
     func test_setEnabled_does_not_crash_for_either_value() {
-        // We don't assert on the outcome — the test runner isn't really
+        // We don't assert on the outcome. The test runner isn't really
         // bootstrapped as a Login Item. Just verify the API doesn't trap.
         LoginItemController.shared.setEnabled(false)
-        // Don't actually flip to true in CI — that registers the test runner
+        // Don't actually flip to true in CI. That registers the test runner
         // as a login item, which leaks across runs.
     }
 }

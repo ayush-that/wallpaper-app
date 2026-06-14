@@ -10,7 +10,7 @@ import QuartzCore
 /// swapping `layer.contents` on the main thread inside an action-disabled
 /// `CATransaction`.
 ///
-/// `pause` flips a flag — the display link keeps ticking, but `tick()` short-
+/// `pause` flips a flag; the display link keeps ticking, but `tick()` short-
 /// circuits. This is cheaper than starting/stopping the link and keeps the
 /// resume path instant.
 ///

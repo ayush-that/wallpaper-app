@@ -43,7 +43,7 @@ final class WallpaperCodecTests: XCTestCase {
     }
 
     func test_wallpaper_type_raw_values_are_stable() {
-        // Lock these — every later phase and on-disk format relies on these strings.
+        // Lock these. Every later phase and on-disk format relies on these strings.
         XCTAssertEqual(WallpaperType.image.rawValue, "image")
         XCTAssertEqual(WallpaperType.gif.rawValue, "gif")
         XCTAssertEqual(WallpaperType.video.rawValue, "video")

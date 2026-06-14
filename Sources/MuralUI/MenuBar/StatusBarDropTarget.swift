@@ -16,7 +16,7 @@ public final class StatusBarDropTarget: NSObject, NSDraggingDestination {
         return VideoAsset.supportedExtensions.contains(ext)
     }
 
-    /// Test seam — bypass the AppKit drag pasteboard.
+    /// Test seam - bypass the AppKit drag pasteboard.
     public func simulate(drop urls: [URL]) {
         guard let first = urls.first(where: { shouldAccept(filename: $0.path) }) else { return }
         onDrop(first)

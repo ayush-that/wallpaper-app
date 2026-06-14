@@ -7,7 +7,7 @@ import OSLog
 
 /// Captures system-mix audio via `ScreenCaptureKit`'s `SCStream`. Buffers are
 /// copied out of the SCK callback into an owned `[Float]` and handed to the
-/// injected `AudioRingBuffer` before the callback returns — see the buffer-
+/// injected `AudioRingBuffer` before the callback returns; see the buffer-
 /// escape invariant in `docs/research/03-swift-apis-reference.md` §3.8.
 ///
 /// Requires the user to grant Screen Recording permission in System Settings
@@ -23,7 +23,7 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
     private let queue = DispatchQueue(label: "app.mural.audio.capture")
     private var stream: SCStream?
 
-    /// Diagnostic counters — log every ~1s of audio frames so we can see if
+    /// Diagnostic counters: log every ~1s of audio frames so we can see if
     /// SCStream is delivering buffers at all and what their levels look like.
     private let diag = DiagnosticCounters()
 
@@ -58,14 +58,14 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
         let config = SCStreamConfiguration()
         config.capturesAudio = true
         // NOTE: `excludesCurrentProcessAudio = true` was suppressing audio
-        // delivery entirely on macOS 26.5 in observed testing — leave it false
+        // delivery entirely on macOS 26.5 in observed testing; leave it false
         // until we revisit on a known-good macOS version.
         config.excludesCurrentProcessAudio = false
         config.sampleRate = 48000
         config.channelCount = 2
         // SCK requires at least one visual output type even when we only care
         // about audio. macOS 26.5 also rejected `minimumFrameInterval` of
-        // 1 fps in some experiments — bump to 30 fps to match Apple sample
+        // 1 fps in some experiments; bump to 30 fps to match Apple sample
         // defaults; we still discard the video frames.
         config.width = 64
         config.height = 64
@@ -102,7 +102,7 @@ public final class SystemAudioCapture: NSObject, SCStreamOutput, SCStreamDelegat
 
         // CRITICAL: copy data out BEFORE the callback returns. We get a retained
         // block buffer here, but we still copy into our owned [Float] before
-        // handing to the ring — never let the SCK pointer escape downstream.
+        // handing to the ring; never let the SCK pointer escape downstream.
         var blockBuffer: CMBlockBuffer?
         var audioBufferList = AudioBufferList(
             mNumberBuffers: 1,

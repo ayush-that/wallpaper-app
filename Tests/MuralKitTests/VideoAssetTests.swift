@@ -7,7 +7,7 @@ final class VideoAssetTests: XCTestCase {
         let bundle = Bundle(for: type(of: self))
         return try XCTUnwrap(
             bundle.url(forResource: "red-1s", withExtension: "mp4", subdirectory: "Fixtures"),
-            "missing Tests/Fixtures/red-1s.mp4 — run the generator from the plan"
+            "missing Tests/Fixtures/red-1s.mp4 - run the generator from the plan"
         )
     }
 

@@ -6,7 +6,7 @@ import Foundation
 /// web/shader wallpapers.
 ///
 /// Holds a `FFTSetup` opaque pointer that must be released in `deinit`, so
-/// this is a `final class`. It is NOT `Sendable` — callers must serialise
+/// this is a `final class`. It is NOT `Sendable`; callers must serialise
 /// access (e.g. wrap in an actor or dedicated queue).
 public final class FFTAnalyzer {
     private let length = 1024

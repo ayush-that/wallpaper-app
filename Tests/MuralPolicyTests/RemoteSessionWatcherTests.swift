@@ -36,7 +36,7 @@ final class RemoteSessionWatcherTests: XCTestCase {
         watcher.start { _ in callCount.set(callCount.get() + 1) }
         try await Task.sleep(nanoseconds: 200_000_000) // ~4 polls
         watcher.stop()
-        // Only the initial synchronous fire — no transitions in this test window.
+        // Only the initial synchronous fire, no transitions in this test window.
         XCTAssertEqual(callCount.get(), 1, "callback should fire only on transitions after the initial fire")
     }
 

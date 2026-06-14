@@ -6,7 +6,7 @@ import AppKit
 ///
 /// `attach` installs the rendering surface into the host. `detach` releases media
 /// resources and returns the host to a transparent state. `pause` halts animation
-/// without tearing down resources — `resume` brings it back. `pause` and `resume`
+/// without tearing down resources; `resume` brings it back. `pause` and `resume`
 /// must be safe to call repeatedly and in any order; idempotency is the contract.
 public protocol WallpaperRenderer: AnyObject {
     @MainActor func attach(to host: WallpaperHost)

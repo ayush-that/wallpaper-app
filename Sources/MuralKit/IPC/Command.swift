@@ -2,7 +2,7 @@ import Foundation
 
 /// Verbs that the in-app control socket accepts from the muralctl CLI.
 /// Encoded as JSON over a Unix domain socket. The schema is part of the
-/// public command-line contract — once shipped, new cases must be additive
+/// public command-line contract: once shipped, new cases must be additive
 /// (decoders need to ignore unknown verbs gracefully).
 public enum Command: Codable, Equatable, Sendable {
     case set(wallpaperID: UUID, displayUUID: String?)

@@ -4,7 +4,7 @@ import Foundation
 /// (a.k.a. `LivelyInfo.json`). The JSON wire format uses Capitalised keys
 /// produced by the upstream Lively Wallpaper ecosystem; we map them to
 /// idiomatic Swift property names via `CodingKeys`. The wire format must
-/// not change — renaming the JSON keys would break compatibility with
+/// not change: renaming the JSON keys would break compatibility with
 /// bundles users may want to import.
 public struct ZipBundleManifest: Decodable, Sendable {
     public let appVersion: String?

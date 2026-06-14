@@ -72,12 +72,12 @@ public final class ShaderRenderer: WallpaperRenderer {
         mtkView.isPaused = false
     }
 
-    /// Phase 7 hook — cap framerate under thermal pressure.
+    /// Phase 7 hook: cap framerate under thermal pressure.
     public func setPreferredFPS(_ fps: Int) {
         mtkView.preferredFramesPerSecond = max(1, min(120, fps))
     }
 
-    /// Phase 9 hook — forward global mouse to interactive shaders.
+    /// Phase 9 hook: forward global mouse to interactive shaders.
     public func setGlobalMouse(_ point: NSPoint, screenFrame: CGRect) {
         guard screenFrame.width > 0, screenFrame.height > 0 else { return }
         let nx = (point.x - screenFrame.minX) / screenFrame.width
@@ -116,7 +116,7 @@ public final class ShaderRenderer: WallpaperRenderer {
 // MARK: - PropertiesSink
 
 extension ShaderRenderer: PropertiesSink {
-    /// Phase 9 — translate a property override into a user uniform on the core.
+    /// Phase 9: translate a property override into a user uniform on the core.
     /// Scalar values (double/int/bool) land in the `x` channel of a `float4`;
     /// `.color` is decoded as RGBA. `.string` is not representable as a uniform
     /// and is silently ignored.

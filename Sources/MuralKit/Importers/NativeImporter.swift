@@ -48,7 +48,7 @@ public struct NativeImporter: Sendable {
                 try? FileManager.default.copyItem(at: placeholder, to: thumbDest)
             }
         case .web, .urlPage, .appWindow:
-            // No default thumbnail for these types — Phase 12 ships placeholders.
+            // No default thumbnail for these types; Phase 12 ships placeholders.
             break
         }
 

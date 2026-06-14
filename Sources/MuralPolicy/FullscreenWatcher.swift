@@ -7,7 +7,7 @@ import OSLog
 /// from a non-Mural window. Drives `PauseReason.fullscreenOccluded`.
 ///
 /// The watcher accepts a `displayProvider` closure that returns the current
-/// snapshot of displays keyed by their persistent UUID — typically provided
+/// snapshot of displays keyed by their persistent UUID, typically provided
 /// from `DisplayManager` at the AppDelegate layer.
 @MainActor
 public final class FullscreenWatcher {
@@ -60,7 +60,7 @@ public final class FullscreenWatcher {
     /// Pure function: given a snapshot of displays and a coverage threshold,
     /// returns the set of display UUIDs occluded by a non-Mural window.
     /// `selfPID` lets us filter out our own windows reliably (the name-based
-    /// match on `kCGWindowOwnerName == "Mural"` is unreliable on macOS 26+ —
+    /// match on `kCGWindowOwnerName == "Mural"` is unreliable on macOS 26+:
     /// the field can be `nil` or redacted for the current process).
     /// Public for testability.
     public static func scan(

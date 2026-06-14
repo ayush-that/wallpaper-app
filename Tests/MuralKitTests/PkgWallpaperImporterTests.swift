@@ -36,7 +36,7 @@ final class PkgWallpaperImporterTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: pkgDir.appendingPathComponent("project.json").path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: pkgDir.appendingPathComponent("wallpaper.json").path))
         // Thumbnail synthesis from a 64-byte all-0xAB "clip.mp4" will fail
-        // silently — that's expected and not a test concern.
+        // silently, that's expected and not a test concern.
     }
 
     func test_unsupported_project_type_throws() throws {

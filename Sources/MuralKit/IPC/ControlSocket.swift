@@ -97,7 +97,7 @@ public final class ControlSocket {
             }
     }
 
-    /// Cheap heuristic — if the buffer's last non-whitespace byte is `}`, treat
+    /// Cheap heuristic: if the buffer's last non-whitespace byte is `}`, treat
     /// it as a complete JSON document. The CLI sends one-shot payloads, so this
     /// is enough to avoid waiting for an explicit EOF on `isComplete`.
     private static func looksLikeCompleteJSON(_ data: Data) -> Bool {

@@ -1,7 +1,7 @@
 import AppKit
 
-/// An NSWindow that lives on the desktop layer — behind icons, transparent,
-/// click-through, present on every Space.
+/// An NSWindow that lives on the desktop layer (behind icons, transparent,
+/// click-through, present on every Space).
 ///
 /// Modeled on Plash's DesktopWindow. Level is `CGWindowLevelForKey(.desktopWindow)`,
 /// which sits below desktop icons but above the system Desktop Picture.
@@ -10,7 +10,7 @@ import AppKit
 /// stationary in Mission Control, ignored by `Cmd-`` cycling, and excluded
 /// from the fullscreen Space.
 /// `sharingType = .none` excludes the window from screenshots and Mission
-/// Control snapshots — wallpaper isn't content the user is sharing.
+/// Control snapshots; wallpaper isn't content the user is sharing.
 public final class DesktopWindow: NSWindow {
     public init(screen: NSScreen) {
         super.init(
@@ -34,7 +34,7 @@ public final class DesktopWindow: NSWindow {
         setFrame(screen.frame, display: false)
     }
 
-    /// Clicks should fall through to the desktop — never make this window key/main.
+    /// Clicks should fall through to the desktop; never make this window key/main.
     override public var canBecomeKey: Bool {
         false
     }
