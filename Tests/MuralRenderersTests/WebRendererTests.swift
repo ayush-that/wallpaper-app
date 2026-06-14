@@ -48,24 +48,34 @@ final class WebRendererTests: XCTestCase {
     func test_set_property_invokes_livelyPropertyListener() throws {
         let url = try fixtureURL()
         let renderer = WebRenderer(entryURL: url, packageRoot: url.deletingLastPathComponent())
-        renderer.attach(to: makeHost())
 
         let expectation = expectation(description: "dot background changes after setProperty")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            renderer.set(property: "color", value: .color("#00ff00"))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let webView = renderer.testWebView
-                webView.evaluateJavaScript("document.getElementById('dot').style.background") { result, _ in
-                    let css = (result as? String) ?? ""
-                    XCTAssertTrue(
-                        css.contains("rgb(0, 255, 0)") || css.contains("#00ff00") || css.contains("0, 255, 0"),
-                        "expected green; got '\(css)'"
-                    )
+        expectation.assertForOverFulfill = false
+
+        func pollForGreen(attemptsLeft: Int) {
+            renderer.testWebView.evaluateJavaScript("document.getElementById('dot').style.background") { result, _ in
+                let css = (result as? String) ?? ""
+                if css.contains("rgb(0, 255, 0)") || css.contains("#00ff00") || css.contains("0, 255, 0") {
                     expectation.fulfill()
+                } else if attemptsLeft > 0 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        pollForGreen(attemptsLeft: attemptsLeft - 1)
+                    }
                 }
             }
         }
-        wait(for: [expectation], timeout: 6.0)
+
+        var started = false
+        renderer.onBridgeMessage = { message in
+            guard !started, case let .console(_, text) = message,
+                  text.contains("hello from web wallpaper") else { return }
+            started = true
+            renderer.set(property: "color", value: .color("#00ff00"))
+            pollForGreen(attemptsLeft: 50)
+        }
+        renderer.attach(to: makeHost())
+
+        wait(for: [expectation], timeout: 15.0)
     }
 
     func test_detach_clears_host() throws {
