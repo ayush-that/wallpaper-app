@@ -63,3 +63,6 @@ iOSInjectionProject/
 *.cer
 *.mobileprovision
 AuthKey_*.p8
+
+# Internal development plans and research notes (not for the public repo)
+docs/superpowers/
